@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<?php
+	Ini_Set( 'display_errors', true );
+	include("functions.php");
+?>
+<html lang="en">
+	<script>
+	// Enable bootstrap tooltips
+	$(function ()
+	        { $("[rel=tooltip]").tooltip();
+	        });
+	</script>
+<h4>CPU</h4>
+<?php makeCpuBars(); ?>

@@ -47,11 +47,5 @@
 	}
 
 	echo 'The token is: '.$token;
-
-	echo '<div class="col-md-10 col-sm-offset-1">';
-	echo '<a href="http://trakt.tv/user/d4rk" class="thumbnail">';
-	echo '<img src="'.$network.':32400/library/metadata/41136/thumb/1376822551?X-Plex-Token=<C2sDoxvY4F9n8fdqMyzD>" alt="trakt.tv" class="img-responsive"></a></div>';
-	//var_dump($output);
-	//var_dump($plexSessionXML);
 ?>
 

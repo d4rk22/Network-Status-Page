@@ -25,21 +25,35 @@
 		<script src="//code.jquery.com/jquery.js"></script>
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/js/bootstrap.min.js"></script>
+		<script>
+		$('.carousel').carousel({
+  			interval: 2000
+		})
+		</script>
 <?php
 	Ini_Set( 'display_errors', true );
-	include("../functions.php");
-	include ('../lib/Transmissi./onRPC.class.php');
+	//include("functions.php");
+	//include("lib/forecast.io.php");
+	//include ('lib/TransmissionRPC.class.php');
 
-	$rpc = new TransmissionRPC();
+	//$plexNewestXML = simplexml_load_file('http://10.0.1.3:32400/library/sections/7/newest');
+	//$mediaKey = $plexNewestXML->Video[0]['key'];
+	//$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
 
-	$rpc->username = 'admin';
-  	$rpc->password = 'Insight22';
+	//echo $mediaKey;
+	//var_dump($mediaXML);
 
-  	$stats = $rpc->request( "session-stats", array() );
+	//if (count($plexNewestXML->Video) > 0) {
+	//	$nowplaying = true;
+	//}
+	//$number = count($plexNewestXML->Video);
 
-	var_dump($stats);
+	//echo $number;
 
-	var_dump($rpc);
+	//echo $nowplaying;
 
-	echo 'this sucks';
+	//makeRecenlyReleased();
+
+	echo phpinfo();
 ?>
+

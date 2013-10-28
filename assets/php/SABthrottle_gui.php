@@ -84,7 +84,7 @@
 			elseif (($avgPing + 10) < $ping_high):
 				if ($sabSpeedLimitCurrent < $sabSpeedLimitMax):
 					// Increase speed by 256KBps
-					echo 'SAB is downloading and ping is '.($avgPing + 10).'  so increasing download speed.';
+					echo 'SAB is downloading but and ping is low enough so increasing download speed.';
 					$sabSpeedLimitSet = $sabSpeedLimitCurrent + 256;
 					shell_exec('curl "http://10.0.1.3:8080/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey=d8f21cb16e5dd227e8e33909a2c4c081"');
 				else:

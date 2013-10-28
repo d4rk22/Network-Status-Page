@@ -35,7 +35,7 @@ $services = array(
 	new serviceMinecraft("Feed the Beast Server", 25565, "http://d4rk.co/mc")
 );
 ?>
-<table>
+<table class="center">
 	<?php foreach($services as $service){ ?>
 		<tr>
 			<td style="text-align: right; padding-right:5px;" class="exoextralight"><?php echo $service->name; ?></td>

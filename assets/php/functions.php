@@ -275,11 +275,62 @@ function ping()
 	if($clientIP != '10.0.1.1') {
 		$pingIP = $clientIP;
 	}
-	$terminal = shell_exec('ping -c 5 '.$pingIP);
-	$findme = 'dev =';
-	$start = strpos($terminal, $findme);
-	$avgPing = substr($terminal, ($start +13), 2);
+	$terminal_output = shell_exec('ping -c 5 '.$pingIP);
+	// If using something besides OS X you might want to customize the following variables for proper output of average ping.
+	$findme_start = '= ';
+	$start = strpos($terminal_output, $findme_start);
+	$ping_return_value_str = substr($terminal_output, ($start +2), 100);
+	$findme_stop = '.';
+	$stop = strpos($ping_return_value_str, $findme_stop);
+	$avgPing = substr($ping_return_value_str, ($stop + 5), $stop);
 	return $avgPing;
+}
+
+function sabSpeedAdjuster()
+{
+	global $sabnzbd_api;
+	global $sabSpeedLimitMax;
+	global $sabSpeedLimitMin;
+	// Set how high ping we want to hit before throttling
+	global $ping_throttle;
+
+	// Check the current ping
+	$avgPing = ping();
+	// Get SABnzbd XML
+	$sabnzbdXML = simplexml_load_file('http://10.0.1.3:8080/api?mode=queue&start=START&limit=LIMIT&output=xml&apikey='.$sabnzbd_api);
+	// Get current SAB speed limit
+	$sabSpeedLimitCurrent = $sabnzbdXML->speedlimit;
+	
+	// Check to see if SAB is downloading
+	if (($sabnzbdXML->status) == 'Downloading'):
+			// If it is downloading and ping is over X value, slow it down
+			if ($avgPing > $ping_throttle):
+				if ($sabSpeedLimitCurrent > $sabSpeedLimitMin):
+					// Reduce speed by 256KBps
+					echo 'Ping is over '.$ping_throttle;
+					echo '<br>';
+					echo 'Slowing down SAB';
+					$sabSpeedLimitSet = $sabSpeedLimitCurrent - 256;
+					shell_exec('curl "http://10.0.1.3:8080/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey='.$sabnzbd_api.'"');
+				else:
+					echo 'Ping is over '.$ping_throttle.' but SAB cannot slow down anymore';
+				endif;	
+			elseif (($avgPing + 9) < $ping_throttle):
+				if ($sabSpeedLimitCurrent < $sabSpeedLimitMax):
+					// Increase speed by 256KBps
+					echo 'SAB is downloading and ping is '.($avgPing + 9).'  so increasing download speed.';
+					$sabSpeedLimitSet = $sabSpeedLimitCurrent + 256;
+					shell_exec('curl "http://10.0.1.3:8080/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey='.$sabnzbd_api.'"');
+				else:
+					echo 'SAB is downloading. Ping is low enough but we are at global download speed limit.';
+				endif;
+			else:
+				echo 'SAB is downloading. Ping is ok but not low enough to speed up SAB.';
+			endif;
+		else:
+			// do nothing, 
+			echo 'SAB is not downloading.';
+		endif;
 }
 
 function getNetwork()
@@ -413,7 +464,9 @@ function makeNowPlaying()
 	$network = getNetwork();
 	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
 
-	if (count($plexSessionXML->Video) == 0):
+	if (!$plexSessionXML):
+		makeRecenlyPlayed();
+	elseif (count($plexSessionXML->Video) == 0):
 		makeRecenlyReleased();
 	else:
 		$i = 0; // Initiate and assign a value to i & t

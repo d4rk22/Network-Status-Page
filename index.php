@@ -70,6 +70,7 @@
 				opacity:1;
 				z-index:1;
 			}
+			/* End of carousel slide transition hack */
 			/* Disables shadowing on right and left sides of carousel images for a crisp look */
 			.carousel-control.left {
 				background-image: none;
@@ -77,6 +78,12 @@
 			.carousel-control.right {
 				background-image: none;
 			}
+			/* End of carousel shadow modification */
+			/* Disables ping ID looking like a link and makes it look white */
+			a#ping.badge.pull-right {
+				color:#FFF;
+			}
+			/* End of Ping ID hack */
 		</style>
 		<link rel="apple-touch-icon-precomposed" href="/assets/ico/apple-touch-icon.png" />
 		<link rel="shortcut icon" href="assets/ico/favicon.ico">
@@ -265,7 +272,8 @@
 							<div class="panel panel-default">
 								<div class="panel-heading">
 									<h4 class="panel-title exoextralight">
-										<span id="ping" class="badge pull-right" rel="tooltip" data-toggle="tooltip" data-placement="left" title="Ping"></span>
+										<a id="ping" class="badge pull-right" rel="tooltip" data-toggle="tooltip" data-placement="left" title="Ping" href="http://www.pingtest.net/index.php">
+										</a>
 										Bandwidth
 									</h4>
 								</div>

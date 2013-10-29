@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <?php
 	Ini_Set( 'display_errors', true );
-	include("functions.php");
+	include '../../init.php';
+	include ROOT_DIR . '/assets/php/functions.php';
 
 	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
 	$clientIP = get_client_ip();

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <?php
 	Ini_Set( 'display_errors', false);
-	include("functions.php");
+	include '../../init.php';
+	include ROOT_DIR . '/assets/php/functions.php';
 ?>
 <html lang="en">
 	<script>

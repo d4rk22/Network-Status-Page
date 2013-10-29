@@ -32,26 +32,8 @@
 		</script>
 <?php
 	Ini_Set( 'display_errors', true );
-	include("functions.php");
-	include("lib/forecast.io.php");
-	include ('lib/TransmissionRPC.class.php');
-
-	//echo $mediaKey;
-	//var_dump($mediaXML);
-
-	//if (count($plexNewestXML->Video) > 0) {
-	//	$nowplaying = true;
-	//}
-	//$number = count($plexNewestXML->Video);
-
-	//echo $number;
-
-	//echo $nowplaying;
-
-	//makeRecenlyReleased();
-
-	//echo phpinfo();
-	//$sabnzbdXML = simplexml_load_file('http://10.0.1.3:8080/api?mode=qstatus&output=xml&apikey=d8f21cb16e5dd227e8e33909a2c4c081');
+	include '../../init.php';
+	include ROOT_DIR . '/assets/php/functions.php';
 
 //function sabSpeedAdjuster()
 //{

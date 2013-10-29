@@ -1,8 +1,39 @@
 <?php
-	Ini_Set( 'display_errors', false);
-	include("lib/phpseclib0.3.5/Net/SSH2.php");
-	require_once('MinecraftServerStatus.class.php');
 
+$config_path = '/Users/zeus/Sites/config.ini'; //path to config file, recommend you place it outside of web root
+
+Ini_Set( 'display_errors', false);
+include '../../init.php';
+include 'lib/phpseclib0.3.5/Net/SSH2.php';
+require_once 'MinecraftServerStatus.class.php';
+$config = parse_ini_file($config_path);
+
+// Import variables from config file
+// Network Details
+$local_pfsense_ip = $config['local_pfsense_ip'];
+$local_server_ip = $config['local_server_ip'];
+$wan_domain = $config['wan_domain'];
+$plex_server_ip = $config['plex_server_ip'];
+$plex_port = $config['plex_port'];
+// Credentials
+$pfSense_username = $config['pfSense_username'];
+$pfSense_password = $config['pfSense_password'];
+$plex_username = $config['plex_username'];
+$plex_password = $config['plex_password'];
+$trakt_username = $config['trakt_username'];
+// API Keys
+$forecast_api = $config['forecast_api'];
+$sabnzbd_api = $config['sabnzbd_api'];
+// SAB Auto Throttler
+$ping_throttle = $config['ping_throttle'];
+$sabSpeedLimitMax = $config['sabSpeedLimitMax'];
+$sabSpeedLimitMin = $config['sabSpeedLimitMin'];
+// Misc
+$weather_lat = $config['weather_lat'];
+$weather_long = $config['weather_long'];
+$weather_name = $config['weather_name'];
+
+// Calculate server load
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
 	$loads = sys_getloadavg();
 else
@@ -13,6 +44,8 @@ $televisionTotalSpace = 5.95935e12; // This is in bytes
 $television2TotalSpace = 5.95935e12; // This is in bytes
 $television3TotalSpace = 4.99178e12; // This is in bytes
 
+// This is if you want to get a % of cpu usage in real time instead of load.
+// After using it for a week I determined that it gave me a lot less information than load does.
 function getCpuUsage()
 {
 	$top = shell_exec('top -l 1 -n 0');
@@ -88,6 +121,7 @@ function makeLoadBars()
 
 function getFreeRam()
 {
+	// This is very customized to OS X, if using another OS you'll have to roll your own
 	$top = shell_exec('top -l 1 -n 0');
 	$findme = 'PhysMem:';
 	$physMemStart = strpos($top, $findme);
@@ -286,6 +320,29 @@ function ping()
 	return $avgPing;
 }
 
+function getNetwork()
+{
+	$clientIP = get_client_ip();
+	if($clientIP=='10.0.1.1'):
+		$network='http://10.0.1.3';
+	else:
+		$network='http://d4rk.co';
+	endif;
+	return $network;
+}
+
+function get_client_ip() 
+{
+	if ( isset($_SERVER["REMOTE_ADDR"])) { 
+		$ipaddress = $_SERVER["REMOTE_ADDR"];
+	}else if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) {
+		$ipaddress = $_SERVER["HTTP_X_FORWARDED_FOR"];
+	}else if (isset($_SERVER["HTTP_CLIENT_IP"])) {
+		$ipaddress = $_SERVER["HTTP_CLIENT_IP"];
+	} 
+	return $ipaddress;
+}
+
 function sabSpeedAdjuster()
 {
 	global $sabnzbd_api;
@@ -333,40 +390,22 @@ function sabSpeedAdjuster()
 		endif;
 }
 
-function getNetwork()
+function makeRecenlyViewed()
 {
-	$clientIP = get_client_ip();
-	if($clientIP=='10.0.1.1'):
-		$network='http://10.0.1.3';
-	else:
-		$network='http://d4rk.co';
-	endif;
-	return $network;
-}
-
-function get_client_ip() 
-{
-	if ( isset($_SERVER["REMOTE_ADDR"])) { 
-		$ipaddress = $_SERVER["REMOTE_ADDR"];
-	}else if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) {
-		$ipaddress = $_SERVER["HTTP_X_FORWARDED_FOR"];
-	}else if (isset($_SERVER["HTTP_CLIENT_IP"])) {
-		$ipaddress = $_SERVER["HTTP_CLIENT_IP"];
-	} 
-	return $ipaddress;
-}
-
-function makeRecenlyPlayed()
-{
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
-	$clientIP = get_client_ip();
-
+	global $local_pfsense_ip;
+	global $plex_port;
+	global $trakt_username;
+	global $weather_lat;
+	global $weather_long;
+	global $weather_name;
 	$network = getNetwork();
-	$trakt_url = 'http://trakt.tv/user/d4rk/widgets/watched/all-tvthumb.jpg';
+	$clientIP = get_client_ip();
+	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
+	$trakt_url = 'http://trakt.tv/user/'.$trakt_username.'/widgets/watched/all-tvthumb.jpg';
 	$traktThumb = '/Users/zeus/Sites/d4rk.co/assets/misc/all-tvthumb.jpg';
 
 	echo '<div class="col-md-12">';
-	echo '<a href="http://trakt.tv/user/d4rk" class="thumbnail">';
+	echo '<a href="http://trakt.tv/user/'.$trakt_username.'" class="thumbnail">';
 	if (file_exists($traktThumb) && (filemtime($traktThumb) > (time() - 60 * 15))) {
 		// Trakt image is less than 15 minutes old.
 		// Don't refresh the image, just use the file as-is.
@@ -386,21 +425,29 @@ function makeRecenlyPlayed()
 
 		}
 	}
-	if($clientIP == '10.0.1.1' && count($plexSessionXML->Video) == 0) {
+	// This checks to see if you are inside your local network. If you are it gives you the forecast as well.
+	if($clientIP == $local_pfsense_ip && count($plexSessionXML->Video) == 0) {
 		echo '<hr>';
 		echo '<h1 class="exoextralight" style="margin-top:5px;">';
 		echo 'Forecast</h1>';
-		echo '<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=40.7838&lon=-96.622773&name=Lincoln, NE"> </iframe>';
+		echo '<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat='.$weather_lat.'&lon='.$weather_long.'&name='.$weather_name.'"> </iframe>';
 	}
 	echo '</div>';
 }
 
 function makeRecenlyReleased()
 {
-	$plexToken = 'pastPlextokenhere';	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
-	$plexNewestXML = simplexml_load_file('http://10.0.1.3:32400/library/sections/7/newest');
-	$clientIP = get_client_ip();
+	global $local_pfsense_ip;
+	global $plex_server_ip;
+	global $plex_port;
+	global $trakt_username;
+	global $weather_lat;
+	global $weather_long;
+	global $weather_name;
+	$plexToken = getPlexToken();
 	$network = getNetwork();
+	$clientIP = get_client_ip();
+	$plexNewestXML = simplexml_load_file($network.':'.$plex_port.'/library/sections/7/newest');
 	
 	echo '<div class="col-md-12">';
 	echo '<div class="thumbnail">';
@@ -415,21 +462,21 @@ function makeRecenlyReleased()
 	echo '<div class="carousel-inner">';
 	echo '<div class="item active">';
 	$mediaKey = $plexNewestXML->Video[0]['key'];
-	$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
+	$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
 	$movieTitle = $mediaXML->Video['title'];
 	$movieArt = $mediaXML->Video['thumb'];
-	echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
+	echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
 	echo '</div>'; // Close item div
 	$i=1;
 	for ( ; ; ) {
 		if($i==15) break;
 		$mediaKey = $plexNewestXML->Video[$i]['key'];
-		$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
+		$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
 		$movieTitle = $mediaXML->Video['title'];
 		$movieArt = $mediaXML->Video['thumb'];
 		$movieYear = $mediaXML->Video['year'];
 		echo '<div class="item">';
-		echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
+		echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
 		//echo '<div class="carousel-caption">';
 		//echo '<h3>'.$movieTitle.$movieYear.'</h3>';
 		//echo '<p>Summary</p>';
@@ -460,12 +507,20 @@ function makeRecenlyReleased()
 
 function makeNowPlaying()
 {
-	$plexToken = 'pastPlextokenhere';	// You can get your Plex token using the getPlexToken() function. This will be automated once I find out how often the token has to be updated.
+	global $local_pfsense_ip;
+	global $plex_server_ip;
+	global $plex_port;
+	global $trakt_username;
+	global $weather_lat;
+	global $weather_long;
+	global $weather_name;
+	$plexToken = getPlexToken();
 	$network = getNetwork();
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
+	$clientIP = get_client_ip();
+	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
 
 	if (!$plexSessionXML):
-		makeRecenlyPlayed();
+		makeRecenlyViewed();
 	elseif (count($plexSessionXML->Video) == 0):
 		makeRecenlyReleased();
 	else:
@@ -478,14 +533,14 @@ function makeNowPlaying()
 		foreach ($plexSessionXML->Video as $sessionInfo):
 			$mediaKey=$sessionInfo['key'];
 			$playerTitle=$sessionInfo->Player['title'];
-			$mediaXML = simplexml_load_file('http://10.0.1.3:32400'.$mediaKey);
+			$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
 			$type=$mediaXML->Video['type'];
 			echo '<div class="thumbnail">';
 			$i++; // Increment i every pass through the array
 			if ($type == "movie"):
 				// Build information for a movie
 				$movieArt = $mediaXML->Video['thumb'];
-				echo '<img src="'.$network.':32400'.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
 				echo '<div class="caption">';
 				$movieTitle = $mediaXML->Video['title'];
 				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
@@ -499,7 +554,7 @@ function makeNowPlaying()
 			else:
 				// Build information for a tv show
 				$tvArt = $mediaXML->Video['grandparentThumb'];
-				echo '<img src="'.$network.':32400'.$tvArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="'.$network.':'.$plex_port.$tvArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
 				echo '<div class="caption">';
 				$showTitle = $mediaXML->Video['grandparentTitle'];
 				$episodeTitle = $mediaXML->Video['title'];
@@ -537,8 +592,11 @@ function makeBandwidthBars()
 
 function getBandwidth()
 {
-	$ssh = new Net_SSH2('10.0.1.1');
-	if (!$ssh->login('username', 'password')) { // replace password and username with pfSense ssh username and password if you want to use this
+	global $local_pfsense_ip;
+	global $pfSense_username;
+	global $pfSense_password;
+	$ssh = new Net_SSH2($local_pfsense_ip);
+	if (!$ssh->login($pfSense_username,$pfSense_password)) {
 		exit('Login Failed');
 	}
 
@@ -593,8 +651,12 @@ function getMinecraftPlayers($port)
 
 function getPlexToken()
 {
-	$myPlex = shell_exec('curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: my-app" -u"usernameoremailformyPlex":"password" -X POST https://my.plexapp.com/users/sign_in.xml');
-	return $myPlex;
+	global $plex_username;
+	global $plex_password;
+	$myPlex = shell_exec('curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: my-app" -u "'.$plex_username.'"":""'.$plex_password.'" -X POST https://my.plexapp.com/users/sign_in.xml 2> /dev/null');
+	$myPlex_xml = simplexml_load_string($myPlex);
+	$token = $myPlex_xml['authenticationToken'];
+	return $token;
 }
 
 function getDir($b)
@@ -605,12 +667,11 @@ function getDir($b)
 
 function makeWeatherSidebar()
 {
-	$forecastAPI = 'INSERT FORECAST API NUMBER HERE, ITS FREE';
-	$forecastExcludes = '?exclude=daily,flags';
-	// Lincoln, NE lat/long = 40.784007 -96.620592
-	$forecastLat = '40.784007';
-	$forecastLong = '-96.620592';
-	$currentForecast = json_decode(file_get_contents('https://api.forecast.io/forecast/'.$forecastAPI.'/'.$forecastLat.','.$forecastLong.$forecastExcludes));
+	global $forecast_api;
+	global $weather_lat;
+	global $weather_long;
+	$forecastExcludes = '?exclude=daily,flags'; // Take a look at https://developer.forecast.io/docs/v2 to configure your weather information.
+	$currentForecast = json_decode(file_get_contents('https://api.forecast.io/forecast/'.$forecast_api.'/'.$weather_lat.','.$weather_long.$forecastExcludes));
 
 	$currentSummary = $currentForecast->currently->summary;
 	$currentSummaryIcon = $currentForecast->currently->icon;
@@ -664,7 +725,7 @@ function makeWeatherSidebar()
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$minutelySummary.'</h5>';
 	echo '<h4 class="exoregular">Next 24 Hours</h4>';
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$hourlySummary.'</h5>';
-	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/40.7838,-96.622773">Forecast.io</a></small></p> ';
+	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/'.$weather_lat.','.$weather_long.'">Forecast.io</a></small></p> ';
 }
 
 ?>

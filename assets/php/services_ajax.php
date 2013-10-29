@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <?php
 	Ini_Set( 'display_errors', true );
-	include("functions.php");
+	include '../../init.php';
+	include ROOT_DIR . '/assets/php/functions.php';
 	include("service.class.php");
 	include("serviceSAB.class.php");
 	include("serviceMinecraft.class.php");
@@ -13,8 +14,9 @@
 	        { $("[rel=tooltip]").tooltip();
 	        });
 	</script>
-<?php 
-$sabnzbdXML = simplexml_load_file('http://10.0.1.3:8080/api?mode=qstatus&output=xml&apikey=d8f21cb16e5dd227e8e33909a2c4c081');
+<?php
+global $sabnzbd_api;
+$sabnzbdXML = simplexml_load_file('http://10.0.1.3:8080/api?mode=qstatus&output=xml&apikey='.$sabnzbd_api);
 
 if (($sabnzbdXML->state) == 'Downloading'):
 	$timeleft = $sabnzbdXML->timeleft;

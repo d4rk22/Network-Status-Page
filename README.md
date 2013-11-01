@@ -8,13 +8,7 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 [Plex forum thread][pft]
 
 [ls]: http://d4rk.co/
-[pft]: http://forums.plexapp.com/index.php/topic/82978-showing-off-whats-possible-with-plex/
-
-###Screenshots
----------------
-![alt tag](https://dl.dropboxusercontent.com/u/493625/Do%20Not%20Delete/d4rk.co.png)
-
-![alt tag](https://dl.dropboxusercontent.com/u/493625/Do%20Not%20Delete/d4rk.co%20-%20now%20playing.png)
+[pft]: http://forums.plexapp.com/index.php/topic/84856-network-status-page/
 
 
 ###Features
@@ -45,6 +39,12 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 [bs]: http://getbootstrap.com
 
 
+###Screenshots
+---------------
+![alt tag](https://dl.dropboxusercontent.com/u/493625/Do%20Not%20Delete/d4rk.co.png)
+
+![alt tag](https://dl.dropboxusercontent.com/u/493625/Do%20Not%20Delete/d4rk.co%20-%20now%20playing.png)
+
 
 ###Requirements
 ---------------
@@ -58,6 +58,7 @@ by rewriting the functions that don't work on those platforms.
 [pms]: http://www.plexapp.com/desktop/
 [pp]: https://my.plexapp.com/subscription/about
 [fcAPI]: https://developer.forecast.io
+
 
 ###Optional
 ---------------

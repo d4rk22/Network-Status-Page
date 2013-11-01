@@ -49,7 +49,8 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 ###Requirements
 ---------------
 * [Plex Media Server][pms] (v0.9.8+) and a [PlexPass][pp] membership `These are both free.`
-* The weather sidebar requires a [forecast.io API key][fcAPI] `The forecast.io API is free for the first 1000 API calls per day. Every API call after that costs $1 per 10,000 (that is, 0.01¢). I average 300-400 calls per day and have only ever gone over 1000 when debugging and have never needed to provide billing info.`
+* The weather sidebar requires a [forecast.io API key][fcAPI] 
+```The forecast.io API is free for the first 1000 API calls per day. Every API call after that costs $1 per 10,000 (that is, 0.01¢). I average 300-400 calls per day and have only ever gone over 1000 when debugging and have never needed to provide billing info.```
 * Web server that supports php (apache, nginx, XAMPP, WampServer, EasyPHP, lighttpd, etc)
 * PHP 5.4
 

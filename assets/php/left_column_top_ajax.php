@@ -4,13 +4,10 @@
 	include '../../init.php';
 	include ROOT_DIR . '/assets/php/functions.php';
 
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
 	$clientIP = get_client_ip();
-	//$clientIP = '10.0.1.1';
-	if($clientIP == '10.0.1.1'):
-		// extra if code for only displaying weather when plex is playing:   && count($plexSessionXML->Video) > 0
-		//echo '<h4 class="exoextralight">Forecast</h4>';
-		//echo '<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=40.7838&lon=-96.622773&name=Lincoln, NE"> </iframe>';
+	if($weather_always_display):
+		makeWeatherSidebar();
+	elseif($clientIP == '10.0.1.1'):
 		makeWeatherSidebar();
 	else:
 		echo '<ul class="nav nav-pills nav-stacked">';

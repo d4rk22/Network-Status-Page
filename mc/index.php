@@ -2,7 +2,6 @@
 <?php
 	Error_Reporting( E_ALL | E_STRICT );
 	Ini_Set( 'display_errors', false );
-
 ?>
 <html lang="en">
 	<head>
@@ -29,7 +28,7 @@
 		<link rel="shortcut icon" href="/mc/favicon.ico">
 		<link rel="apple-touch-icon-precomposed" href="/mc/img/apple-touch-icon.png" />
 		<script src="http://code.jquery.com/jquery.js"></script>
-		<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+		<script src="/js/bootstrap.min.js"></script>
 		<!-- Javascript -->
 		<script>
 		// Enable bootstrap tooltips

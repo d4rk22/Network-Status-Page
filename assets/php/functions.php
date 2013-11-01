@@ -24,11 +24,15 @@ $trakt_username = $config['trakt_username'];
 // API Keys
 $forecast_api = $config['forecast_api'];
 $sabnzbd_api = $config['sabnzbd_api'];
-// SAB Auto Throttler
+// SABnzbd+
+$sab_ip = $config['sab_ip'];
+$sab_port = $config['sab_port'];
 $ping_throttle = $config['ping_throttle'];
 $sabSpeedLimitMax = $config['sabSpeedLimitMax'];
 $sabSpeedLimitMin = $config['sabSpeedLimitMin'];
 // Misc
+$ping_ip = $config['ping_ip'];
+$weather_always_display = $config['weather_always_display'];
 $weather_lat = $config['weather_lat'];
 $weather_long = $config['weather_long'];
 $weather_name = $config['weather_name'];
@@ -39,6 +43,7 @@ if (strpos(strtolower(PHP_OS), "Darwin") === false)
 else
 	$loads = Array(0.55,0.7,1);
 
+// Set the total disk space
 $ereborTotalSpace = 8.96102e12; // This is in bytes
 $televisionTotalSpace = 5.95935e12; // This is in bytes
 $television2TotalSpace = 5.95935e12; // This is in bytes
@@ -122,13 +127,18 @@ function makeLoadBars()
 function getFreeRam()
 {
 	// This is very customized to OS X, if using another OS you'll have to roll your own
+	// This will output exactly what activity monitor in 10.9 reports as Memory Used
+	// And while this works very well I am considering disabling it because it's almost
+	// meaningless to keep track of in OS X. What I care more about is Swap Used.
 	$top = shell_exec('top -l 1 -n 0');
-	$findme = 'PhysMem:';
-	$physMemStart = strpos($top, $findme);
-	$wiredRam = (substr($top, ($physMemStart + 9), 4))/1024; // GB
-	$activeRam = (substr($top, ($physMemStart + 22), 4))/1024; // GB
+	$find_str_1 = 'unused.';
+	$unusedStart = strpos($top, $find_str_1);
+	// Grab the unused ram amount
+	$unusedRam = trim(substr($top,($unusedStart-6),4))/1024; // GB
+	// What is the total ram in the computer
 	$totalRam = (substr(shell_exec('sysctl hw.memsize'), 12))/1024/1024/1024; // GB
-	$usedRam = $wiredRam + $activeRam; // Find how much ram is used.
+	// Find the amount of used ram
+	$usedRam = $totalRam - $unusedRam; // Find how much ram is used in GB.
 	return array (sprintf('%.0f',($usedRam / $totalRam) * 100), 'Used Ram', $usedRam, $totalRam);
 }
 
@@ -304,12 +314,15 @@ function printDiskBarGB($dup, $name = "", $dsu, $dts)
 
 function ping()
 {
+	global $local_pfsense_ip;
+	global $ping_ip;
+
 	$clientIP = get_client_ip();
-	$pingIP = '8.8.8.8';
-	if($clientIP != '10.0.1.1') {
+	//$pingIP = '8.8.8.8';
+	if($clientIP != $local_pfsense_ip) {
 		$pingIP = $clientIP;
 	}
-	$terminal_output = shell_exec('ping -c 5 '.$pingIP);
+	$terminal_output = shell_exec('ping -c 10 -q '.$ping_ip);
 	// If using something besides OS X you might want to customize the following variables for proper output of average ping.
 	$findme_start = '= ';
 	$start = strpos($terminal_output, $findme_start);
@@ -322,11 +335,16 @@ function ping()
 
 function getNetwork()
 {
+	// It should be noted that this function is designed specifically for getting the local / wan name for Plex.
+	global $local_pfsense_ip;
+	global $wan_domain;
+	global $plex_server_ip;
+
 	$clientIP = get_client_ip();
-	if($clientIP=='10.0.1.1'):
-		$network='http://10.0.1.3';
+	if($clientIP==$local_pfsense_ip):
+		$network='http://'.$plex_server_ip;
 	else:
-		$network='http://d4rk.co';
+		$network='http://'.$wan_domain;
 	endif;
 	return $network;
 }
@@ -345,6 +363,8 @@ function get_client_ip()
 
 function sabSpeedAdjuster()
 {
+	global $sab_ip;
+	global $sab_port;
 	global $sabnzbd_api;
 	global $sabSpeedLimitMax;
 	global $sabSpeedLimitMin;
@@ -354,7 +374,7 @@ function sabSpeedAdjuster()
 	// Check the current ping
 	$avgPing = ping();
 	// Get SABnzbd XML
-	$sabnzbdXML = simplexml_load_file('http://10.0.1.3:8080/api?mode=queue&start=START&limit=LIMIT&output=xml&apikey='.$sabnzbd_api);
+	$sabnzbdXML = simplexml_load_file('http://'.$sab_ip.':'.$sab_port.'/api?mode=queue&start=START&limit=LIMIT&output=xml&apikey='.$sabnzbd_api);
 	// Get current SAB speed limit
 	$sabSpeedLimitCurrent = $sabnzbdXML->speedlimit;
 	
@@ -368,7 +388,7 @@ function sabSpeedAdjuster()
 					echo '<br>';
 					echo 'Slowing down SAB';
 					$sabSpeedLimitSet = $sabSpeedLimitCurrent - 256;
-					shell_exec('curl "http://10.0.1.3:8080/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey='.$sabnzbd_api.'"');
+					shell_exec('curl "http://'.$sab_ip.':'.$sab_port.'/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey='.$sabnzbd_api.'"');
 				else:
 					echo 'Ping is over '.$ping_throttle.' but SAB cannot slow down anymore';
 				endif;	
@@ -377,7 +397,7 @@ function sabSpeedAdjuster()
 					// Increase speed by 256KBps
 					echo 'SAB is downloading and ping is '.($avgPing + 9).'  so increasing download speed.';
 					$sabSpeedLimitSet = $sabSpeedLimitCurrent + 256;
-					shell_exec('curl "http://10.0.1.3:8080/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey='.$sabnzbd_api.'"');
+					shell_exec('curl "http://'.$sab_ip.':'.$sab_port.'/api?mode=config&name=speedlimit&value='.$sabSpeedLimitSet.'&apikey='.$sabnzbd_api.'"');
 				else:
 					echo 'SAB is downloading. Ping is low enough but we are at global download speed limit.';
 				endif;
@@ -437,8 +457,8 @@ function makeRecenlyViewed()
 
 function makeRecenlyReleased()
 {
+	// Various items are commented out as I was playing with what information to include.
 	global $local_pfsense_ip;
-	global $plex_server_ip;
 	global $plex_port;
 	global $trakt_username;
 	global $weather_lat;
@@ -452,12 +472,6 @@ function makeRecenlyReleased()
 	echo '<div class="col-md-12">';
 	echo '<div class="thumbnail">';
 	echo '<div id="carousel-example-generic" class=" carousel slide">';
-	//echo '<!-- Indicators -->';
-	//echo '<ol class="carousel-indicators">';
-	//echo '<li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>';
-	//echo '<li data-target="#carousel-example-generic" data-slide-to="1"></li>';
-	//echo '<li data-target="#carousel-example-generic" data-slide-to="2"></li>';
-	//echo '</ol>';
 	echo '<!-- Wrapper for slides -->';
 	echo '<div class="carousel-inner">';
 	echo '<div class="item active">';
@@ -465,7 +479,7 @@ function makeRecenlyReleased()
 	$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
 	$movieTitle = $mediaXML->Video['title'];
 	$movieArt = $mediaXML->Video['thumb'];
-	echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
+	echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
 	echo '</div>'; // Close item div
 	$i=1;
 	for ( ; ; ) {
@@ -476,7 +490,7 @@ function makeRecenlyReleased()
 		$movieArt = $mediaXML->Video['thumb'];
 		$movieYear = $mediaXML->Video['year'];
 		echo '<div class="item">';
-		echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="...">';
+		echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
 		//echo '<div class="carousel-caption">';
 		//echo '<h3>'.$movieTitle.$movieYear.'</h3>';
 		//echo '<p>Summary</p>';
@@ -508,7 +522,6 @@ function makeRecenlyReleased()
 function makeNowPlaying()
 {
 	global $local_pfsense_ip;
-	global $plex_server_ip;
 	global $plex_port;
 	global $trakt_username;
 	global $weather_lat;
@@ -540,27 +553,27 @@ function makeNowPlaying()
 			if ($type == "movie"):
 				// Build information for a movie
 				$movieArt = $mediaXML->Video['thumb'];
-				echo '<img src="'.$network.':'.$plex_port.$movieArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
+				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
 				echo '<div class="caption">';
 				$movieTitle = $mediaXML->Video['title'];
 				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
-				if (strlen($mediaXML->Video['summary']) < 800):
+				if (strlen($mediaXML->Video['summary']) < 700):
 					$movieSummary = $mediaXML->Video['summary'];
 				else:
-					$movieSummary = substr_replace($mediaXML->Video['summary'], '...', 800);
+					$movieSummary = substr_replace($mediaXML->Video['summary'], '...', 700);
 				endif;
 
 				echo '<p class="exolight" style="margin-top:5px;">'.$movieSummary.'</p>';
 			else:
 				// Build information for a tv show
 				$tvArt = $mediaXML->Video['grandparentThumb'];
-				echo '<img src="'.$network.':'.$plex_port.$tvArt.'?X-Plex-Token='.$plexToken.'" alt="thumbnail">';
-				echo '<div class="caption">';
 				$showTitle = $mediaXML->Video['grandparentTitle'];
 				$episodeTitle = $mediaXML->Video['title'];
 				$episodeSummary = $mediaXML->Video['summary'];
 				$episodeSeason = $mediaXML->Video['parentIndex'];
 				$episodeNumber = $mediaXML->Video['index'];
+				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$tvArt).'" alt="'.$showTitle.'">';
+				echo '<div class="caption">';
 				//echo '<h2 class="exoextralight">'.$showTitle.'</h2>';
 				echo '<h3 class="exoextralight" style="margin-top:5px;">Season '.$episodeSeason.'</h3>';
 				echo '<h4 class="exoextralight" style="margin-top:5px;">E'.$episodeNumber.' - '.$episodeTitle.'</h4>';

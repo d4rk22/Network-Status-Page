@@ -3,11 +3,10 @@
 	Error_Reporting( E_ALL | E_STRICT );
 	Ini_Set( 'display_errors', true);
 
-	include("assets/php/functions.php");
-	include('assets/php/Mobile_Detect.php');
+	include 'init.php';
+	include ROOT_DIR . '/assets/php/Mobile_Detect.php';
 
 	$detect = new Mobile_Detect;
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
 ?>
 <html lang="en">
 	<head>
@@ -197,7 +196,7 @@
 				                    url:theResource,
 				                    type:"head",
 				                    success:function(res,code,xhr) {
-				                         console.log("Checking Plex XML "+ localStorage["resourcemodified"] + " to "+ xhr.getResponseHeader("Last-Modified"))
+				                         console.log("Checking to see if plexcheckfile2 changed."+ localStorage["resourcemodified"] + " to "+ xhr.getResponseHeader("Last-Modified"))
 				                         if(localStorage["resourcemodified"] != xhr.getResponseHeader("Last-Modified")) getResource();
 				                    }
 				               })
@@ -211,7 +210,7 @@
 				                    cache:false,
 				                    success:function(res,code,xhr) {
 				                         localStorage["resourcemodified"] = xhr.getResponseHeader("Last-Modified");
-				                         console.log("Updating our cache and refreshing Now Playing divs");
+				                         console.log("Updating our cache and refreshing appropriate divs.");
 				                         $left_column_top_refresh.load('assets/php/left_column_top_ajax.php');
 				                         $now_playing_title_refresh.load("assets/php/now_playing_title_ajax.php");
 			        			   $now_playing_refresh.load("assets/php/now_playing_ajax.php");

@@ -47,15 +47,15 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 
 ###Requirements
 ---------------
-* [Plex Media Server][pms] (v0.9.8+) and a [PlexPass][pp] membership `These are both free.`
+* [Plex Media Server][pms] (v0.9.8+) and a [myPlex][pp] account `These are both free.`
 * The weather sidebar requires a [forecast.io API key][fcAPI] `Free up to 1000 calls/day.`
 * Web server that supports php (apache, nginx, XAMPP, WampServer, EasyPHP, lighttpd, etc)
 * PHP 5.4
 
-**Note:** While this project is written with OS X in mind, it can very easily be adapted to run on linux or windows
-by rewriting the functions that don't work on those platforms.
+**Note:** While this project is written with OS X in mind, it can very easily be adapted to run on linux or windows by rewriting the functions that don't work on those platforms.
+
 [pms]: http://www.plexapp.com/desktop/
-[pp]: https://my.plexapp.com/subscription/about
+[pp]: https://my.plexapp.com
 [fcAPI]: https://developer.forecast.io
 
 

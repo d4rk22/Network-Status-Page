@@ -213,7 +213,7 @@
 				          }
 				}, 5000); // 5 seconds
 
-				// Change the size of the now playing div to match the client size every time it's resized
+				// Change the size of the now playing div to match the client size
 				function doResizeNowPlaying() {
 					var height = 0;
 					var body = window.document.body;
@@ -227,7 +227,7 @@
 					now_playing.style.height = ((height - now_playing.offsetTop) + "px");
 					console.log("Div resize complete. New size is: " + height);
 				};
-
+				// Detect if we are on a mobile device, if we aren't resize the now playing div using doResizeNowPlaying()
 				if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
 					// some code..
 				} else {
@@ -236,10 +236,10 @@
 						clearTimeout(resizeTimer);
 						resizeTimer = setTimeout(doResizeNowPlaying, 100);
 					});
-
+					// Resize the now playing div 5 seconds after page load
 					$(function(){
 	   					clearTimeout(resizeTimer);
-						resizeTimer = setTimeout(doResizeNowPlaying, 100);
+						resizeTimer = setTimeout(doResizeNowPlaying, 5000);
 					});
 				}
 		    	});

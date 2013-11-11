@@ -31,11 +31,23 @@ $ping_throttle = $config['ping_throttle'];
 $sabSpeedLimitMax = $config['sabSpeedLimitMax'];
 $sabSpeedLimitMin = $config['sabSpeedLimitMin'];
 // Misc
+$cpu_cores = $config['cpu_cores'];
 $ping_ip = $config['ping_ip'];
 $weather_always_display = $config['weather_always_display'];
 $weather_lat = $config['weather_lat'];
 $weather_long = $config['weather_long'];
 $weather_name = $config['weather_name'];
+
+// Set the path for the Plex Token
+$plexTokenCache = ROOT_DIR . '/assets/caches/plex_token.txt';
+// Check to see if the plex token exists and is younger than one week
+// if not grab it and write it to our caches folder
+if (file_exists($plexTokenCache) && (filemtime($traktThumb) > (time() - 60 * 60 * 24 * 7))) {
+	$plexToken = file_get_contents(ROOT_DIR . '/assets/caches/plex_token.txt');
+} else {
+	file_put_contents($plexTokenCache, getPlexToken());
+	$plexToken = file_get_contents(ROOT_DIR . '/assets/caches/plex_token.txt');
+}
 
 // Calculate server load
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
@@ -68,10 +80,10 @@ function makeCpuBars()
 
 function makeTotalDiskSpace()
 {
-	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2") + getDiskspaceUsed("/Volumes/Storage space");
-	$dts = disk_total_space("/") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/WD2.1") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'] + $GLOBALS['television3TotalSpace'];
-	$dup = $dts - $du;
-	printDiskBarTotal(sprintf('%.0f',($du / $dts) * 100), "Total Disk Space", $du, $dts);
+	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Time Machine") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2") + getDiskspaceUsed("/Volumes/Storage space");
+	$dts = disk_total_space("/") + disk_total_space("/Volumes/Time Machine") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/WD2.1") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'] + $GLOBALS['television3TotalSpace'];
+	$dfree = $dts - $du;
+	printDiskBar(sprintf('%.0f',($du / $dts) * 100), "Total Capacity", $dfree, $dts);
 }
 
 function byteFormat($bytes, $unit = "", $decimals = 2) {
@@ -101,15 +113,31 @@ function byteFormat($bytes, $unit = "", $decimals = 2) {
 	return sprintf('%.' . $decimals . 'f '.$unit, $value);
   }
 
+  function autoByteFormat($bytes) {
+  	// If we are working with more than 0 and less than 1TB.
+  	if (($bytes >= 0) && ($bytes < 1099511627776)) {
+  		$unit = 'GB';
+  		$decimals = 0;
+  	// 1TB to 999TB
+   	} elseif (($bytes >= 1099511627776) && ($bytes < 1.1259e15)) {
+   		$unit = 'TB';
+   		$decimals = 2;
+   	}
+   	return array($bytes, $unit, $decimals);
+  }
+
 function makeDiskBars()
 {
-	printDiskBarGB(getDiskspace("/"), "SSD", getDiskspaceUsed("/"), disk_total_space("/"));
-	printDiskBarGB(getDiskspace("/Volumes/Isengard"), "Isengard", getDiskspaceUsed("/Volumes/Isengard"), disk_total_space("/Volumes/Isengard"));
-	printDiskBar(getDiskspace("/Volumes/WD2.1"), "Minas Morgul", getDiskspaceUsed("/Volumes/WD2.1"), disk_total_space("/Volumes/WD2.1"));
-	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", getDiskspaceUsed("/Volumes/Erebor"), 8.96102e12);
-	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", getDiskspaceUsed("/Volumes/Television"), 5.95935e12);
-	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", getDiskspaceUsed("/Volumes/Television 2"), 5.95935e12);
-	printDiskBar(getDiskspaceTV3("/Volumes/Storage space"), "Vilya", getDiskspaceUsed("/Volumes/Storage space"), 4.99178e12);
+	// For special drives like my Drobos I have to set the total disk space manually.
+	// That is why you see the total space in bytes.
+	printDiskBar(getDiskspace("/"), "SSD", disk_free_space("/"), disk_total_space("/"));
+	printDiskBar(getDiskspace("/Volumes/Time Machine"), "Time Machine", disk_free_space("/Volumes/Time Machine"), disk_total_space("/Volumes/Time Machine"));
+	printDiskBar(getDiskspace("/Volumes/Isengard"), "Isengard", disk_free_space("/Volumes/Isengard"), disk_total_space("/Volumes/Isengard"));
+	printDiskBar(getDiskspace("/Volumes/WD2.1"), "Minas Morgul", disk_free_space("/Volumes/WD2.1"), disk_total_space("/Volumes/WD2.1"));
+	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", (8.96102e12 - getDiskspaceUsed("/Volumes/Erebor")), 8.96102e12);
+	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", (5.95935e12 - getDiskspaceUsed("/Volumes/Television")), 5.95935e12);
+	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", (5.95935e12 - getDiskspaceUsed("/Volumes/Television 2")), 5.95935e12);
+	printDiskBar(getDiskspaceTV3("/Volumes/Storage space"), "Vilya", (4.99178e12 - getDiskspaceUsed("/Volumes/Storage space")), 4.99178e12);
 }
 
 function makeRamBars()
@@ -128,7 +156,7 @@ function getFreeRam()
 {
 	// This is very customized to OS X, if using another OS you'll have to roll your own
 	// This will output exactly what activity monitor in 10.9 reports as Memory Used
-	// And while this works very well I am considering disabling it because it's almost
+	// And while this works very well I disabled it because it's almost
 	// meaningless to keep track of in OS X. What I care more about is Swap Used.
 	$top = shell_exec('top -l 1 -n 0');
 	$find_str_1 = 'unused.';
@@ -192,7 +220,8 @@ function getDiskspaceTV3($dir)
 
 function getLoad($id)
 {
-	return 100 * ($GLOBALS['loads'][$id] / 8);
+	global $cpu_cores;
+	return 100 * ($GLOBALS['loads'][$id] / $cpu_cores);
 }
 
 function printBar($value, $name = "")
@@ -234,34 +263,9 @@ function printRamBar($percent, $name = "", $used, $total)
 	echo '</div>';
 }
 
-function printDiskBarTotal($dup, $name = "", $dsu, $dts)
-{
-	if ($dup < 90)
-	{
-		$progress = "progress-bar";
-	}
-	else if (($dup >= 90) && ($dup < 95))
-	{
-		$progress = "progress-bar progress-bar-warning";
-	}
-	else
-	{
-		$progress = "progress-bar progress-bar-danger";
-	}
-	
-	if ($name != "") echo '<!-- ' . $name . ' -->';
-	echo '<div class="exolight">';
-		if ($name != "")
-			echo $name . ": ";
-			echo number_format($dup, 0) . "%";
-		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat($dsu, "TB", 2) . ' / ' . byteFormat($dts, "TB", 2) . '" class="progress">';
-			echo '<div class="'. $progress .'" style="width: ' . $dup . '%"></div>';
-		echo '</div>';
-	echo '</div>';
-}
-
 function printDiskBar($dup, $name = "", $dsu, $dts)
 {
+	// Using autoByteFormat() the amount of space will be formatted as GB or TB as needed.
 	if ($dup < 90)
 	{
 		$progress = "progress-bar";
@@ -280,33 +284,7 @@ function printDiskBar($dup, $name = "", $dsu, $dts)
 		if ($name != "")
 			echo $name . ": ";
 			echo number_format($dup, 0) . "%";
-		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat($dsu, "TB", 2) . ' / ' . byteFormat($dts, "TB", 2) . '" class="progress">';
-			echo '<div class="'. $progress .'" style="width: ' . $dup . '%"></div>';
-		echo '</div>';
-	echo '</div>';
-}
-
-function printDiskBarGB($dup, $name = "", $dsu, $dts)
-{
-	if ($dup < 90)
-	{
-		$progress = "progress-bar";
-	}
-	else if (($dup >= 90) && ($dup < 95))
-	{
-		$progress = "progress-bar progress-bar-warning";
-	}
-	else
-	{
-		$progress = "progress-bar progress-bar-danger";
-	}
-
-	if ($name != "") echo '<!-- ' . $name . ' -->';
-	echo '<div class="exolight">';
-		if ($name != "")
-			echo $name . ": ";
-			echo number_format($dup, 0) . "%";
-		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat($dsu, "GB", 0) . ' / ' . byteFormat($dts, "GB", 0) . '" class="progress">';
+		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat(autoByteFormat($dsu)[0], autoByteFormat($dsu)[1], autoByteFormat($dsu)[2]) . ' free out of ' . byteFormat(autoByteFormat($dts)[0], autoByteFormat($dts)[1], autoByteFormat($dts)[2]) . '" class="progress">';
 			echo '<div class="'. $progress .'" style="width: ' . $dup . '%"></div>';
 		echo '</div>';
 	echo '</div>';
@@ -422,14 +400,14 @@ function makeRecenlyViewed()
 	$clientIP = get_client_ip();
 	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
 	$trakt_url = 'http://trakt.tv/user/'.$trakt_username.'/widgets/watched/all-tvthumb.jpg';
-	$traktThumb = '/Users/zeus/Sites/d4rk.co/assets/misc/all-tvthumb.jpg';
+	$traktThumb = '/Users/zeus/Sites/d4rk.co/assets/caches/thumbnails/all-tvthumb.jpg';
 
 	echo '<div class="col-md-12">';
 	echo '<a href="http://trakt.tv/user/'.$trakt_username.'" class="thumbnail">';
 	if (file_exists($traktThumb) && (filemtime($traktThumb) > (time() - 60 * 15))) {
 		// Trakt image is less than 15 minutes old.
 		// Don't refresh the image, just use the file as-is.
-		echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+		echo '<img src="'.$network.'/assets/caches/thumbnails/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
 	} else {
 		// Either file doesn't exist or our cache is out of date,
 		// so check if the server has different data,
@@ -437,11 +415,11 @@ function makeRecenlyViewed()
 		$thumbFromTrakt_md5 = md5_file($trakt_url);
 		$traktThumb_md5 = md5_file($traktThumb);
 		if ($thumbFromTrakt_md5 === $traktThumb_md5) {
-			echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+			echo '<img src="'.$network.'/assets/caches/thumbnails/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
 		} else {
 			$thumbFromTrakt = file_get_contents($trakt_url);
 			file_put_contents($traktThumb, $thumbFromTrakt, LOCK_EX);
-			echo '<img src="'.$network.'/assets/misc/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+			echo '<img src="'.$network.'/assets/caches/thumbnails/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
 
 		}
 	}
@@ -464,7 +442,7 @@ function makeRecenlyReleased()
 	global $weather_lat;
 	global $weather_long;
 	global $weather_name;
-	$plexToken = getPlexToken();
+	global $plexToken;
 	$network = getNetwork();
 	$clientIP = get_client_ip();
 	$plexNewestXML = simplexml_load_file($network.':'.$plex_port.'/library/sections/7/newest');
@@ -527,9 +505,8 @@ function makeNowPlaying()
 	global $weather_lat;
 	global $weather_long;
 	global $weather_name;
-	$plexToken = getPlexToken();
+	global $plexToken;
 	$network = getNetwork();
-	$clientIP = get_client_ip();
 	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
 
 	if (!$plexSessionXML):
@@ -557,6 +534,7 @@ function makeNowPlaying()
 				echo '<div class="caption">';
 				$movieTitle = $mediaXML->Video['title'];
 				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
+				// Truncate movie summary if it's over 700 characters.
 				if (strlen($mediaXML->Video['summary']) < 700):
 					$movieSummary = $mediaXML->Video['summary'];
 				else:
@@ -577,9 +555,15 @@ function makeNowPlaying()
 				//echo '<h2 class="exoextralight">'.$showTitle.'</h2>';
 				echo '<h3 class="exoextralight" style="margin-top:5px;">Season '.$episodeSeason.'</h3>';
 				echo '<h4 class="exoextralight" style="margin-top:5px;">E'.$episodeNumber.' - '.$episodeTitle.'</h4>';
+				// Truncate episode summary if it's over 700 characters.
+				if (strlen($mediaXML->Video['summary']) < 700):
+					$episodeSummary = $mediaXML->Video['summary'];
+				else:
+					$episodeSummary = substr_replace($mediaXML->Video['summary'], '...', 700);
+				endif;
 				echo '<p class="exolight">'.$episodeSummary.'</p>';
 			endif;
-			// Action buttons if we ever want to do something
+			// Action buttons if we ever want to do something with them.
 			//echo '<p><a href="#" class="btn btn-primary">Action</a> <a href="#" class="btn btn-default">Action</a></p>';
 			echo "</div>";
 			echo "</div>";
@@ -605,6 +589,10 @@ function makeBandwidthBars()
 
 function getBandwidth()
 {
+	// For this to work with pfSense you have to have vnstat package installed and
+	// you need to change the -i rl0 to the name of your interface for WAN e.g. -i <interface>
+	// You will also probably need to do a var_dump of $output below and figure out exactly which array 
+	// values you need as they might be off by one or two each.
 	global $local_pfsense_ip;
 	global $pfSense_username;
 	global $pfSense_password;
@@ -613,16 +601,16 @@ function getBandwidth()
 		exit('Login Failed');
 	}
 
-	$dump = $ssh->exec('vnstat -i nve0 -tr');
+	$dump = $ssh->exec('vnstat -i rl0 -tr');
 	$output = preg_split('/[,;| \s]/', $dump);
 	for ($i=count($output)-1; $i>=0; $i--) {
 		if ($output[$i] == '') unset ($output[$i]);
 	}
 	$output = array_values($output);
-	$rxRate = $output[51];
-	$rxFormat = $output[52];
-	$txRate = $output[56];
-	$txFormat = $output[57];
+	$rxRate = $output[50];
+	$rxFormat = $output[51];
+	$txRate = $output[55];
+	$txFormat = $output[56];
 	if ($rxFormat == 'kbit/s') {
 		$rxRateMB = $rxRate / 1024;
 	} else {

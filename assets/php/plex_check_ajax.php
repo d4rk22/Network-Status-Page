@@ -1,11 +1,11 @@
 <?php
 	Ini_Set( 'display_errors', true );
 	include '../../init.php';
-	include ROOT_DIR . '/assets/php/functions.php';
+	include 'functions.php';
 
-	$plexSessionXML = simplexml_load_file('http://10.0.1.3:32400/status/sessions');
-	$plexcheckfile1 = ROOT_DIR . '/assets/misc/plexcheckfile1.txt';
-	$plexcheckfile2 = ROOT_DIR . '/assets/misc/plexcheckfile2.txt';
+	$plexSessionXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.'/status/sessions');
+	$plexcheckfile1 = ROOT_DIR . '/assets/caches/plexcheckfile1.txt';
+	$plexcheckfile2 = ROOT_DIR . '/assets/caches/plexcheckfile2.txt';
 	$plexcheckfile1_md5 = md5_file($plexcheckfile1);
 	$plexcheckfile2_md5 = md5_file($plexcheckfile2);
 	$viewers = 0;

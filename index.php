@@ -110,7 +110,6 @@
 						$('#disk_space').show();
 						$('#now_playing_title').show();
 						$('#now_playing').show();
-						$('#system_ram').show();
 		            		},
 				            complete: function() {
 				            	$('#left_column_top').show();
@@ -121,7 +120,6 @@
 						$('#disk_space').show();
 						$('#now_playing_title').show();
 						$('#now_playing').show();
-						$('#system_ram').show();
 				            },
 				            success: function() {
 				            	$('#left_column_top').show();
@@ -132,7 +130,6 @@
 						$('#disk_space').show();
 						$('#now_playing_title').show();
 						$('#now_playing').show();
-						$('#system_ram').show();
 				            }
 				});
 
@@ -146,9 +143,10 @@
 			        	var $disk_space_refresh = $('#disk_space');
 			        	var $now_playing_title_refresh = $('#now_playing_title');
 			        	var $now_playing_refresh = $('#now_playing');
-			        	var $system_ram_refresh = $('#system_ram');
 
 			        	// Load external php files & assign variables
+			        	$now_playing_title_refresh.load("assets/php/now_playing_title_ajax.php");
+			        	$now_playing_refresh.load("assets/php/now_playing_ajax.php");
 			        	$plex_check_refresh.load('assets/php/plex_check_ajax.php');
 			        	$left_column_top_refresh.load('assets/php/left_column_top_ajax.php');
 			        	$bandwidth_refresh.load("assets/php/bandwidth_ajax.php");
@@ -156,9 +154,6 @@
 			        	$services_refresh.load("assets/php/services_ajax.php");
 			        	$system_load_refresh.load("assets/php/system_load_ajax.php");
 			        	$disk_space_refresh.load("assets/php/disk_space_ajax.php");
-			        	$now_playing_title_refresh.load("assets/php/now_playing_title_ajax.php");
-			        	$now_playing_refresh.load("assets/php/now_playing_ajax.php");
-			        	$system_ram_refresh.load("assets/php/system_ram_ajax.php");
 			        
 				var refreshIdfastest = setInterval(function(){
 			        		$plex_check_refresh.load('assets/php/plex_check_ajax.php');
@@ -180,7 +175,6 @@
 
 			        	var refreshIdslow = setInterval(function(){
 			            	$disk_space_refresh.load('assets/php/disk_space_ajax.php');
-			            	$system_ram_refresh.load('assets/php/system_ram_ajax.php');
 			        	}, 300000); // 5 minutes
 
 			        	var refreshtopleft = setInterval(function(){
@@ -188,7 +182,7 @@
 			        	}, 300000); // 5 minutes
 
 			        	// Load these sections only if Plex has changed states
-			        	var theResource = "assets/misc/plexcheckfile2.txt";
+			        	var theResource = "assets/caches/plexcheckfile2.txt";
  
  				var refreshconditional = setInterval(function(){
 				          if(localStorage["resourcemodified"]) {
@@ -319,9 +313,9 @@
 									<h4 class="exoextralight">Load</h4>
 									<div id="system_load"></div>
 									<hr>
-									<h4 class="exoextralight">Memory</h4>
+								<!--	<h4 class="exoextralight">Memory</h4>
 									<div id="system_ram" style="height:40px"></div>
-									<hr>
+									<hr>	-->
 									<div id="disk_space"></div>
 								</div>
 							</div>

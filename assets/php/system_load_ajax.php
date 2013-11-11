@@ -5,5 +5,4 @@
 	include ROOT_DIR . '/assets/php/functions.php';
 
  	makeLoadBars();
-
   ?>

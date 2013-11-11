@@ -1,4 +1,4 @@
-Network Status Page - 0.1.0
+Network Status Page - 0.1.1
 ===================
 
 Designed to monitor a local server and network with forecast.io, Plex, and pfSense integration.
@@ -28,10 +28,9 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 	* online / offline status for custom services
 	* minute by minute weather forecast from forecast.io
 	* server load
-	* used / total memory
 	* total disk space for all hard drives
 
-* Weather forecast only shows while viewing from local network
+* Weather forecast only shows while viewing from local network `configurable`
 
 * Now Playing section adjusts scrollable height on the fly depending on browser window height
 

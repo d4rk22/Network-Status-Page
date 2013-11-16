@@ -42,7 +42,7 @@ $weather_name = $config['weather_name'];
 $plexTokenCache = ROOT_DIR . '/assets/caches/plex_token.txt';
 // Check to see if the plex token exists and is younger than one week
 // if not grab it and write it to our caches folder
-if (file_exists($plexTokenCache) && (filemtime($traktThumb) > (time() - 60 * 60 * 24 * 7))) {
+if (file_exists($plexTokenCache) && (filemtime($plexTokenCache) > (time() - 60 * 60 * 24 * 7))) {
 	$plexToken = file_get_contents(ROOT_DIR . '/assets/caches/plex_token.txt');
 } else {
 	file_put_contents($plexTokenCache, getPlexToken());

@@ -48,7 +48,7 @@
 			.exoregular {
 				font-family:"exoregular";
 			}
-			/* Changes carousel slide transition to fade transition */
+			/* Changes carousel slide transition to fade transition 
 			.carousel {
 				overflow: hidden;
 			}
@@ -69,7 +69,7 @@
 				opacity:1;
 				z-index:1;
 			}
-			/* End of carousel slide transition hack */
+			 End of carousel slide transition hack */
 			/* Disables shadowing on right and left sides of carousel images for a crisp look */
 			.carousel-control.left {
 				background-image: none;

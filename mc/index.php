@@ -28,7 +28,7 @@
 		<link rel="shortcut icon" href="/mc/favicon.ico">
 		<link rel="apple-touch-icon-precomposed" href="/mc/img/apple-touch-icon.png" />
 		<script src="http://code.jquery.com/jquery.js"></script>
-		<script src="/js/bootstrap.min.js"></script>
+		<script src="/mc/js/bootstrap.min.js"></script>
 		<!-- Javascript -->
 		<script>
 		// Enable bootstrap tooltips

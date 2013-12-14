@@ -80,8 +80,8 @@ function makeCpuBars()
 
 function makeTotalDiskSpace()
 {
-	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Time Machine") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2") + getDiskspaceUsed("/Volumes/Storage space");
-	$dts = disk_total_space("/") + disk_total_space("/Volumes/Time Machine") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/WD2.1") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'] + $GLOBALS['television3TotalSpace'];
+	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Time Machine") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Barad-dur") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2") + getDiskspaceUsed("/Volumes/Storage space");
+	$dts = disk_total_space("/") + disk_total_space("/Volumes/Time Machine") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/WD2.1") + disk_total_space("/Volumes/Barad-dur") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'] + $GLOBALS['television3TotalSpace'];
 	$dfree = $dts - $du;
 	printDiskBar(sprintf('%.0f',($du / $dts) * 100), "Total Capacity", $dfree, $dts);
 }
@@ -134,6 +134,7 @@ function makeDiskBars()
 	printDiskBar(getDiskspace("/Volumes/Time Machine"), "Time Machine", disk_free_space("/Volumes/Time Machine"), disk_total_space("/Volumes/Time Machine"));
 	printDiskBar(getDiskspace("/Volumes/Isengard"), "Isengard", disk_free_space("/Volumes/Isengard"), disk_total_space("/Volumes/Isengard"));
 	printDiskBar(getDiskspace("/Volumes/WD2.1"), "Minas Morgul", disk_free_space("/Volumes/WD2.1"), disk_total_space("/Volumes/WD2.1"));
+	printDiskBar(getDiskspace("/Volumes/Barad-dur"), "Barad-dûr", disk_free_space("/Volumes/Barad-dur"), disk_total_space("/Volumes/Barad-dur"));
 	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", (8.96102e12 - getDiskspaceUsed("/Volumes/Erebor")), 8.96102e12);
 	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", (5.95935e12 - getDiskspaceUsed("/Volumes/Television")), 5.95935e12);
 	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", (5.95935e12 - getDiskspaceUsed("/Volumes/Television 2")), 5.95935e12);
@@ -300,14 +301,18 @@ function ping()
 	if($clientIP != $local_pfsense_ip) {
 		$pingIP = $clientIP;
 	}
-	$terminal_output = shell_exec('ping -c 10 -q '.$ping_ip);
+	$terminal_output = shell_exec('ping -c 5 -q '.$ping_ip);
 	// If using something besides OS X you might want to customize the following variables for proper output of average ping.
 	$findme_start = '= ';
 	$start = strpos($terminal_output, $findme_start);
 	$ping_return_value_str = substr($terminal_output, ($start +2), 100);
-	$findme_stop = '.';
-	$stop = strpos($ping_return_value_str, $findme_stop);
-	$avgPing = substr($ping_return_value_str, ($stop + 5), $stop);
+	$findme_stop1 = '.';
+	$stop = strpos($ping_return_value_str, $findme_stop1);
+	$findme_avgPing_decimal = '.';
+	$avgPing_decimal = strpos($ping_return_value_str, $findme_avgPing_decimal, 6);
+	$findme_forward_slash = '/';
+	$avgPing_forward_slash = strpos($ping_return_value_str, $findme_forward_slash);
+	$avgPing = substr($ping_return_value_str, ($stop + 5), ($avgPing_decimal - $avgPing_forward_slash - 1));
 	return $avgPing;
 }
 
@@ -448,8 +453,8 @@ function makeRecenlyReleased()
 	$plexNewestXML = simplexml_load_file($network.':'.$plex_port.'/library/sections/7/newest');
 	
 	echo '<div class="col-md-12">';
-	echo '<div class="thumbnail">';
 	echo '<div id="carousel-example-generic" class=" carousel slide">';
+	echo '<div class="thumbnail">';
 	echo '<!-- Wrapper for slides -->';
 	echo '<div class="carousel-inner">';
 	echo '<div class="item active">';
@@ -477,7 +482,7 @@ function makeRecenlyReleased()
 		$i++;
 	}
 	echo '</div>'; // Close carousel-inner div
-
+	echo '</div>'; // Close thumbnail div
 	echo '<!-- Controls -->';
 	echo '<a class="left carousel-control" href="#carousel-example-generic" data-slide="prev">';
 	//echo '<span class="glyphicon glyphicon-chevron-left"></span>';
@@ -486,14 +491,6 @@ function makeRecenlyReleased()
 	//echo '<span class="glyphicon glyphicon-chevron-right"></span>';
 	echo '</a>';
 	echo '</div>'; // Close carousel slide div
-	echo '</div>'; // Close thumbnail div
-
-	//if($clientIP == '10.0.1.1' && count($plexSessionXML->Video) == 0) {
-	//	echo '<hr>';
-	//	echo '<h1 class="exoextralight" style="margin-top:5px;">';
-	//	echo 'Forecast</h1>';
-	//	echo '<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=40.7838&lon=-96.622773&name=Lincoln, NE"> </iframe>';
-	//}
 	echo '</div>'; // Close column div
 }
 

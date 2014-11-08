@@ -1,4 +1,4 @@
-Network Status Page - 0.1.1
+Network Status Page - 0.2.0
 ===================
 
 Designed to monitor a local server and network with forecast.io, Plex, and pfSense integration.
@@ -19,18 +19,16 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 
 * Uses jQuery to provide near real time feedback
 
-* Optimized for OS X Mavericks `Tested on OS X 10.9 and Safari 7.0 and iOS 7.0.3 on iPhone/iPad.`
+* Optimized for Apple devices  `Tested on OS X 10.9/10.10 and iOS 7/8`
 
 * Displays the following:
 	* currently playing items from Plex Media Server
 	* current network bandwidth from pfSense
-	* current ping to Google DNS
+	* current ping to ip of your choosing, e.g. Google DNS
 	* online / offline status for custom services
 	* minute by minute weather forecast from forecast.io
 	* server load
 	* total disk space for all hard drives
-
-* Weather forecast only shows while viewing from local network `configurable`
 
 * Now Playing section adjusts scrollable height on the fly depending on browser window height
 
@@ -40,9 +38,9 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 
 ###Screenshots
 ---------------
-![alt tag](https://dl.dropboxusercontent.com/u/493625/Do%20Not%20Delete/d4rk.co.png)
+![alt tag](http://d.pr/i/1hfF8+)
 
-![alt tag](https://dl.dropboxusercontent.com/u/493625/Do%20Not%20Delete/d4rk.co%20-%20now%20playing.png)
+![alt tag](http://d.pr/i/1eTEu+)
 
 
 ###Requirements
@@ -54,8 +52,8 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 
 **Note:** While this project is written with OS X in mind, it can very easily be adapted to run on linux or windows by rewriting the functions that don't work on those platforms.
 
-[pms]: http://www.plexapp.com/desktop/
-[pp]: https://my.plexapp.com
+[pms]: https://plex.tv
+[pp]: https://plex.tv/subscription/about
 [fcAPI]: https://developer.forecast.io
 
 

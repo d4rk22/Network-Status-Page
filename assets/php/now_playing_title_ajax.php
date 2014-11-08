@@ -8,7 +8,8 @@
 	// You will only notice the scrolling feature when there are multiple
 	// shows being watched at the same time.
 	
-	$plexSessionXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.'/status/sessions');
+	$network = getNetwork();
+	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
 
 	// See if Plex Media Server is online and how many people are watching.
 	if (!$plexSessionXML):

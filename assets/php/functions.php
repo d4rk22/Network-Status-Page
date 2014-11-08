@@ -13,6 +13,9 @@ $config = parse_ini_file($config_path);
 $local_pfsense_ip = $config['local_pfsense_ip'];
 $local_server_ip = $config['local_server_ip'];
 $wan_domain = $config['wan_domain'];
+$wan1_ip = $config['wan1_ip'];
+$wan2_ip = $config['wan2_ip'];
+$ping_ip = $config['ping_ip'];
 $plex_server_ip = $config['plex_server_ip'];
 $plex_port = $config['plex_port'];
 // Credentials
@@ -32,7 +35,6 @@ $sabSpeedLimitMax = $config['sabSpeedLimitMax'];
 $sabSpeedLimitMin = $config['sabSpeedLimitMin'];
 // Misc
 $cpu_cores = $config['cpu_cores'];
-$ping_ip = $config['ping_ip'];
 $weather_always_display = $config['weather_always_display'];
 $weather_lat = $config['weather_lat'];
 $weather_long = $config['weather_long'];
@@ -56,10 +58,9 @@ else
 	$loads = Array(0.55,0.7,1);
 
 // Set the total disk space
-$ereborTotalSpace = 8.96102e12; // This is in bytes
-$televisionTotalSpace = 5.95935e12; // This is in bytes
-$television2TotalSpace = 5.95935e12; // This is in bytes
-$television3TotalSpace = 4.99178e12; // This is in bytes
+$ereborTotalSpace = 8.961019766e+12; // This is in bytes
+$televisionTotalSpace = 1.196268651e+13; // This is in bytes
+$television2TotalSpace = 5.959353023e+12; // This is in bytes
 
 // This is if you want to get a % of cpu usage in real time instead of load.
 // After using it for a week I determined that it gave me a lot less information than load does.
@@ -80,10 +81,10 @@ function makeCpuBars()
 
 function makeTotalDiskSpace()
 {
-	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Time Machine") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Barad-dur") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2") + getDiskspaceUsed("/Volumes/Storage space");
-	$dts = disk_total_space("/") + disk_total_space("/Volumes/Time Machine") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/WD2.1") + disk_total_space("/Volumes/Barad-dur") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'] + $GLOBALS['television3TotalSpace'];
+	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Time Machine") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/1TB Portable") + getDiskspaceUsed("/Volumes/WD2.2") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Barad-dur") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2");
+	$dts = disk_total_space("/") + disk_total_space("/Volumes/Time Machine") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/1TB Portable") + disk_total_space("/Volumes/WD2.2") + disk_total_space("/Volumes/WD2.1") + disk_total_space("/Volumes/Barad-dur") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'];
 	$dfree = $dts - $du;
-	printDiskBar(sprintf('%.0f',($du / $dts) * 100), "Total Capacity", $dfree, $dts);
+	printTotalDiskBar(sprintf('%.0f',($du / $dts) * 100), "Total Capacity", $dfree, $dts);
 }
 
 function byteFormat($bytes, $unit = "", $decimals = 2) {
@@ -95,12 +96,12 @@ function byteFormat($bytes, $unit = "", $decimals = 2) {
 		// Generate automatic prefix by bytes 
 		// If wrong prefix given
 		if (!array_key_exists($unit, $units)) {
-			$pow = floor(log($bytes)/log(1024));
+			$pow = floor(log($bytes)/log(1000));
 			$unit = array_search($pow, $units);
 		}
  
 		// Calculate byte value by prefix
-		$value = ($bytes/pow(1024,floor($units[$unit])));
+		$value = ($bytes/pow(1000,floor($units[$unit])));
 	}
  
 	// If decimals is not numeric or decimals is less than 0 
@@ -114,12 +115,12 @@ function byteFormat($bytes, $unit = "", $decimals = 2) {
   }
 
   function autoByteFormat($bytes) {
-  	// If we are working with more than 0 and less than 1TB.
-  	if (($bytes >= 0) && ($bytes < 1099511627776)) {
+  	// If we are working with more than 0 and less than 1000GB (Apple filesystem).
+  	if (($bytes >= 0) && ($bytes < 1000000000000)) {
   		$unit = 'GB';
   		$decimals = 0;
   	// 1TB to 999TB
-   	} elseif (($bytes >= 1099511627776) && ($bytes < 1.1259e15)) {
+   	} elseif (($bytes >= 1000000000000) && ($bytes < 1.1259e15)) {
    		$unit = 'TB';
    		$decimals = 2;
    	}
@@ -133,12 +134,12 @@ function makeDiskBars()
 	printDiskBar(getDiskspace("/"), "SSD", disk_free_space("/"), disk_total_space("/"));
 	printDiskBar(getDiskspace("/Volumes/Time Machine"), "Time Machine", disk_free_space("/Volumes/Time Machine"), disk_total_space("/Volumes/Time Machine"));
 	printDiskBar(getDiskspace("/Volumes/Isengard"), "Isengard", disk_free_space("/Volumes/Isengard"), disk_total_space("/Volumes/Isengard"));
+	printDiskBar(getDiskspace("/Volumes/WD2.2"), "Minas Tirith", disk_free_space("/Volumes/WD2.2"), disk_total_space("/Volumes/WD2.2"));
 	printDiskBar(getDiskspace("/Volumes/WD2.1"), "Minas Morgul", disk_free_space("/Volumes/WD2.1"), disk_total_space("/Volumes/WD2.1"));
 	printDiskBar(getDiskspace("/Volumes/Barad-dur"), "Barad-dûr", disk_free_space("/Volumes/Barad-dur"), disk_total_space("/Volumes/Barad-dur"));
-	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", (8.96102e12 - getDiskspaceUsed("/Volumes/Erebor")), 8.96102e12);
-	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", (5.95935e12 - getDiskspaceUsed("/Volumes/Television")), 5.95935e12);
-	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", (5.95935e12 - getDiskspaceUsed("/Volumes/Television 2")), 5.95935e12);
-	printDiskBar(getDiskspaceTV3("/Volumes/Storage space"), "Vilya", (4.99178e12 - getDiskspaceUsed("/Volumes/Storage space")), 4.99178e12);
+	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", ($GLOBALS['ereborTotalSpace'] - getDiskspaceUsed("/Volumes/Erebor")), $GLOBALS['ereborTotalSpace']);
+	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", ($GLOBALS['televisionTotalSpace'] - getDiskspaceUsed("/Volumes/Television")), $GLOBALS['televisionTotalSpace']);
+	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", ($GLOBALS['television2TotalSpace'] - getDiskspaceUsed("/Volumes/Television 2")), $GLOBALS['television2TotalSpace']);
 }
 
 function makeRamBars()
@@ -184,7 +185,7 @@ function getDiskspaceErebor($dir)
 	$df = disk_free_space($dir);
 	$dt = disk_total_space($dir);
 	$du = $dt - $df;
-	return sprintf('%.0f',($du / 8.96102e12) * 100);
+	return sprintf('%.0f',($du / $GLOBALS['ereborTotalSpace']) * 100);
 }
 
 function getDiskspaceUsed($dir)
@@ -200,7 +201,7 @@ function getDiskspaceTV1($dir)
 	$df = disk_free_space($dir);
 	$dt = disk_total_space($dir);
 	$du = $dt - $df;
-	return sprintf('%.0f',($du / 5.95935e12) * 100);
+	return sprintf('%.0f',($du / $GLOBALS['televisionTotalSpace']) * 100);
 }
 
 function getDiskspaceTV2($dir)
@@ -208,15 +209,7 @@ function getDiskspaceTV2($dir)
 	$df = disk_free_space($dir);
 	$dt = disk_total_space($dir);
 	$du = $dt - $df;
-	return sprintf('%.0f',($du / 5.95935e12) * 100);
-}
-
-function getDiskspaceTV3($dir)
-{
-	$df = disk_free_space($dir);
-	$dt = disk_total_space($dir);
-	$du = $dt - $df;
-	return sprintf('%.0f',($du / 4.99178e12) * 100);
+	return sprintf('%.0f',($du / $GLOBALS['television2TotalSpace']) * 100);
 }
 
 function getLoad($id)
@@ -291,6 +284,33 @@ function printDiskBar($dup, $name = "", $dsu, $dts)
 	echo '</div>';
 }
 
+function printTotalDiskBar($dup, $name = "", $dsu, $dts)
+{
+	// Using autoByteFormat() the amount of space will be formatted as GB or TB as needed.
+	if ($dup < 95)
+	{
+		$progress = "progress-bar";
+	}
+	else if (($dup >= 95) && ($dup < 99))
+	{
+		$progress = "progress-bar progress-bar-warning";
+	}
+	else
+	{
+		$progress = "progress-bar progress-bar-danger";
+	}
+
+	if ($name != "") echo '<!-- ' . $name . ' -->';
+	echo '<div class="exolight">';
+		if ($name != "")
+			echo $name . ": ";
+			echo number_format($dup, 0) . "%";
+		echo '<div rel="tooltip" data-toggle="tooltip" data-placement="bottom" title="' . byteFormat(autoByteFormat($dsu)[0], autoByteFormat($dsu)[1], autoByteFormat($dsu)[2]) . ' free out of ' . byteFormat(autoByteFormat($dts)[0], autoByteFormat($dts)[1], autoByteFormat($dts)[2]) . '" class="progress">';
+			echo '<div class="'. $progress .'" style="width: ' . $dup . '%"></div>';
+		echo '</div>';
+	echo '</div>';
+}
+
 function ping()
 {
 	global $local_pfsense_ip;
@@ -324,7 +344,7 @@ function getNetwork()
 	global $plex_server_ip;
 
 	$clientIP = get_client_ip();
-	if($clientIP==$local_pfsense_ip):
+	if($clientIP=='10.0.1.1'):
 		$network='http://'.$plex_server_ip;
 	else:
 		$network='http://'.$wan_domain;
@@ -441,17 +461,12 @@ function makeRecenlyViewed()
 function makeRecenlyReleased()
 {
 	// Various items are commented out as I was playing with what information to include.
-	global $local_pfsense_ip;
 	global $plex_port;
-	global $trakt_username;
-	global $weather_lat;
-	global $weather_long;
-	global $weather_name;
-	global $plexToken;
 	$network = getNetwork();
 	$clientIP = get_client_ip();
 	$plexNewestXML = simplexml_load_file($network.':'.$plex_port.'/library/sections/7/newest');
 	
+	//echo '<div class="col-md-10 col-sm-offset-1">';
 	echo '<div class="col-md-12">';
 	echo '<div id="carousel-example-generic" class=" carousel slide">';
 	echo '<div class="thumbnail">';
@@ -496,13 +511,7 @@ function makeRecenlyReleased()
 
 function makeNowPlaying()
 {
-	global $local_pfsense_ip;
 	global $plex_port;
-	global $trakt_username;
-	global $weather_lat;
-	global $weather_long;
-	global $weather_name;
-	global $plexToken;
 	$network = getNetwork();
 	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
 
@@ -512,33 +521,52 @@ function makeNowPlaying()
 		makeRecenlyReleased();
 	else:
 		$i = 0; // Initiate and assign a value to i & t
-		$t = 0;
+		$t = 0; // T is the total amount of sessions
 		echo '<div class="col-md-10 col-sm-offset-1">';
+		//echo '<div class="col-md-12">';
 		foreach ($plexSessionXML->Video as $sessionInfo):
 			$t++;
 		endforeach;
 		foreach ($plexSessionXML->Video as $sessionInfo):
-			$mediaKey=$sessionInfo['key'];
-			$playerTitle=$sessionInfo->Player['title'];
+			$mediaKey = $sessionInfo['key'];
+			$playerTitle = $sessionInfo->Player['title'];
 			$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
-			$type=$mediaXML->Video['type'];
+			$type = $mediaXML->Video['type'];
 			echo '<div class="thumbnail">';
 			$i++; // Increment i every pass through the array
 			if ($type == "movie"):
 				// Build information for a movie
 				$movieArt = $mediaXML->Video['thumb'];
-				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
-				echo '<div class="caption">';
 				$movieTitle = $mediaXML->Video['title'];
-				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
-				// Truncate movie summary if it's over 700 characters.
-				if (strlen($mediaXML->Video['summary']) < 700):
+				$duration = $plexSessionXML->Video[$i-1]['duration'];
+				$viewOffset = $plexSessionXML->Video[$i-1]['viewOffset'];
+				$progress = sprintf('%.0f',($viewOffset / $duration) * 100);
+				$user = $plexSessionXML->Video[$i-1]->User['title'];
+				$state = $plexSessionXML->Video[$i-1]->Player['state'];
+				// Truncate movie summary if it's more than 50 words
+				if (countWords($mediaXML->Video['summary']) < 51):
 					$movieSummary = $mediaXML->Video['summary'];
 				else:
-					$movieSummary = substr_replace($mediaXML->Video['summary'], '...', 700);
+					$movieSummary = limitWords($mediaXML->Video['summary'],50); // Limit to 50 words
+					$movieSummary .= "..."; // Add ellipsis
 				endif;
-
+				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
+				// Make now playing progress bar
+				//echo 'div id="now-playing-progress-bar">';
+				echo '<div class="progress now-playing-progress-bar">';
+				echo '<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="'.$progress.'" aria-valuemin="0" aria-valuemax="100" style="width: '.$progress.'%">';
+				echo '</div>';
+				echo '</div>';
+				echo '<div class="caption">';
+				//echo '<h2 class="exoextralight">'.$movieTitle.'</h2>';
 				echo '<p class="exolight" style="margin-top:5px;">'.$movieSummary.'</p>';
+				if ($state == "playing"):
+					// Show the playing icon
+					echo '<span class="glyphicon glyphicon-play"></span>';
+				else:
+					echo '<span class="glyphicon glyphicon-pause"></span>';
+				endif;
+				echo '<p class="exolight">'.$user.'</p>';
 			else:
 				// Build information for a tv show
 				$tvArt = $mediaXML->Video['grandparentThumb'];
@@ -547,18 +575,40 @@ function makeNowPlaying()
 				$episodeSummary = $mediaXML->Video['summary'];
 				$episodeSeason = $mediaXML->Video['parentIndex'];
 				$episodeNumber = $mediaXML->Video['index'];
+				$duration = $plexSessionXML->Video[$i-1]['duration'];
+				$viewOffset = $plexSessionXML->Video[$i-1]['viewOffset'];
+				$progress = sprintf('%.0f',($viewOffset / $duration) * 100);
+				$user = $plexSessionXML->Video[$i-1]->User['title'];
+				$state = $plexSessionXML->Video[$i-1]->Player['state'];
+				//echo '<div class="img-overlay">';
 				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$tvArt).'" alt="'.$showTitle.'">';
+				// Make now playing progress bar
+				//echo 'div id="now-playing-progress-bar">';
+				echo '<div class="progress now-playing-progress-bar">';
+				echo '<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="'.$progress.'" aria-valuemin="0" aria-valuemax="100" style="width: '.$progress.'%">';
+				echo '</div>';
+				echo '</div>';
+				//echo '</div>';
+				// Make description below thumbnail
 				echo '<div class="caption">';
 				//echo '<h2 class="exoextralight">'.$showTitle.'</h2>';
 				echo '<h3 class="exoextralight" style="margin-top:5px;">Season '.$episodeSeason.'</h3>';
 				echo '<h4 class="exoextralight" style="margin-top:5px;">E'.$episodeNumber.' - '.$episodeTitle.'</h4>';
-				// Truncate episode summary if it's over 700 characters.
-				if (strlen($mediaXML->Video['summary']) < 700):
+				// Truncate episode summary if it's more than 50 words
+				if (countWords($mediaXML->Video['summary']) < 51):
 					$episodeSummary = $mediaXML->Video['summary'];
 				else:
-					$episodeSummary = substr_replace($mediaXML->Video['summary'], '...', 700);
+					$episodeSummary = limitWords($mediaXML->Video['summary'],50); // Limit to 50 words
+					$episodeSummary .= "..."; // Add ellipsis
 				endif;
 				echo '<p class="exolight">'.$episodeSummary.'</p>';
+				if ($state == "playing"):
+					// Show the playing icon
+					echo '<span class="glyphicon glyphicon-play"></span>';
+				else:
+					echo '<span class="glyphicon glyphicon-pause"></span>';
+				endif;
+				echo '<p class="exolight">'.$user.'</p>';
 			endif;
 			// Action buttons if we ever want to do something with them.
 			//echo '<p><a href="#" class="btn btn-primary">Action</a> <a href="#" class="btn btn-default">Action</a></p>';
@@ -575,16 +625,39 @@ function makeNowPlaying()
 	endif;
 }
 
-function makeBandwidthBars()
+function getTranscodeSessions()
 {
-	$array = getBandwidth();
+	global $plex_port;
+	$network = getNetwork();
+	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
+
+	if (count($plexSessionXML->Video) > 0):
+		$i = 0; // i is the variable that gets iterated each pass through the array
+		$t = 0; // t is the total amount of sessions
+		$transcodeSessions = 0; // this is the number of active transcodes
+		foreach ($plexSessionXML->Video as $sessionInfo):
+			$t++;
+		endforeach;
+		foreach ($plexSessionXML->Video as $sessionInfo):
+			if ($sessionInfo->TranscodeSession['videoDecision'] == 'transcode') {
+				$transcodeSessions++;
+			};
+			$i++; // Increment i every pass through the array
+		endforeach;
+		return $transcodeSessions;
+	endif;
+}
+
+function makeBandwidthBars($interface)
+{
+	$array = getBandwidth($interface);
 	$dPercent = sprintf('%.0f',($array[0] / 55) * 100);
 	$uPercent = sprintf('%.0f',($array[1] / 5) * 100);
 	printBandwidthBar($dPercent, 'Download', $array[0]);
 	printBandwidthBar($uPercent, 'Upload', $array[1]);
 }
 
-function getBandwidth()
+function getBandwidth($interface)
 {
 	// For this to work with pfSense you have to have vnstat package installed and
 	// you need to change the -i rl0 to the name of your interface for WAN e.g. -i <interface>
@@ -595,10 +668,11 @@ function getBandwidth()
 	global $pfSense_password;
 	$ssh = new Net_SSH2($local_pfsense_ip);
 	if (!$ssh->login($pfSense_username,$pfSense_password)) {
-		exit('Login Failed');
+		//exit('Login Failed');
+		return array(0,0);
 	}
 
-	$dump = $ssh->exec('vnstat -i rl0 -tr');
+	$dump = $ssh->exec('vnstat -i '.$interface.' -tr');
 	$output = preg_split('/[,;| \s]/', $dump);
 	for ($i=count($output)-1; $i>=0; $i--) {
 		if ($output[$i] == '') unset ($output[$i]);
@@ -619,6 +693,35 @@ function getBandwidth()
 		$txRateMB = $txRate;
 	}
 	return  array($rxRateMB, $txRateMB);
+}
+
+function getPing($sourceIP,$destinationIP)
+{
+	// This will work with any pfSense install. $sourceIP is the IP address of the WAN that you want to
+	// use to ping with. This allows you to ping the same address from multiple WANs if you need to.
+
+	global $local_pfsense_ip;
+	global $pfSense_username;
+	global $pfSense_password;
+
+	$ssh = new Net_SSH2($local_pfsense_ip);
+	if (!$ssh->login($pfSense_username,$pfSense_password)) {
+		//exit('Login Failed');
+		return array(0,0);
+	}
+	$terminal_output = $ssh->exec('ping -c 5 -q -S '.$sourceIP.' '.$destinationIP);
+	// If using something besides OS X you might want to customize the following variables for proper output of average ping.
+	$findme_start = '= ';
+	$start = strpos($terminal_output, $findme_start);
+	$ping_return_value_str = substr($terminal_output, ($start +2), 100);
+	$findme_stop1 = '.';
+	$stop = strpos($ping_return_value_str, $findme_stop1);
+	$findme_avgPing_decimal = '.';
+	$avgPing_decimal = strpos($ping_return_value_str, $findme_avgPing_decimal, 6);
+	$findme_forward_slash = '/';
+	$avgPing_forward_slash = strpos($ping_return_value_str, $findme_forward_slash);
+	$avgPing = substr($ping_return_value_str, ($stop + 5), ($avgPing_decimal - $avgPing_forward_slash - 1));
+	return $avgPing;
 }
 
 function printBandwidthBar($percent, $name = "", $Mbps)
@@ -657,6 +760,18 @@ function getPlexToken()
 	return $token;
 }
 
+function countWords($string)
+{
+	$words = explode(" ",$string);
+    return count($words);
+}
+
+function limitWords($string, $word_limit)
+{
+	$words = explode(" ",$string);
+    return implode(" ",array_splice($words,0,$word_limit));
+}
+
 function getDir($b)
 {
    $dirs = array('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'N');
@@ -668,7 +783,7 @@ function makeWeatherSidebar()
 	global $forecast_api;
 	global $weather_lat;
 	global $weather_long;
-	$forecastExcludes = '?exclude=daily,flags'; // Take a look at https://developer.forecast.io/docs/v2 to configure your weather information.
+	$forecastExcludes = '?exclude=flags'; // Take a look at https://developer.forecast.io/docs/v2 to configure your weather information.
 	$currentForecast = json_decode(file_get_contents('https://api.forecast.io/forecast/'.$forecast_api.'/'.$weather_lat.','.$weather_long.$forecastExcludes));
 
 	$currentSummary = $currentForecast->currently->summary;
@@ -680,6 +795,22 @@ function makeWeatherSidebar()
 	}
 	$minutelySummary = $currentForecast->minutely->summary;
 	$hourlySummary = $currentForecast->hourly->summary;
+
+	$sunriseTime = $currentForecast->daily->data[0]->sunriseTime;
+	$sunsetTime = $currentForecast->daily->data[0]->sunsetTime;
+
+	if ($sunriseTime > time()) {
+		$rises = 'Rises';
+	} else {
+		$rises = 'Rose';
+	}
+
+	if ($sunsetTime > time()) {
+		$sets = 'Sets';
+	} else {
+		$sets = 'Set';
+	}
+
 	// If there are alerts, make the alerts variables
 	if (isset($currentForecast->alerts)) {
 		$alertTitle = $currentForecast->alerts[0]->title;
@@ -715,15 +846,20 @@ function makeWeatherSidebar()
 	echo '<li><h4 class="exoregular" style="margin:0px;padding-right:10px;width:80px">'.$currentSummary.'</h4></li>';
 	echo '</ul></li>';
 	echo '</ul>';
-	//if ($currentWindSpeed > 0) {
-	//	$direction = getDir($currentWindBearing);
-	//	echo '<h4 class="exoextralight" style="margin-top:0px">Wind: '.$currentWindSpeed.' mph ('.$direction.')</h4>';
-	//}
+	if ($currentWindSpeed > 0) {
+		$direction = getDir($currentWindBearing);
+		echo '<h4 class="exoextralight" style="margin-top:0px">Wind: '.$currentWindSpeed.' mph from the '.$direction.'</h4>';
+	} else {
+		echo '<h4 class="exoextralight" style="margin-top:0px">Wind: Calm</h4>';
+	}
 	echo '<h4 class="exoregular">Next Hour</h4>';
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$minutelySummary.'</h5>';
 	echo '<h4 class="exoregular">Next 24 Hours</h4>';
 	echo '<h5 class="exoextralight" style="margin-top:10px">'.$hourlySummary.'</h5>';
-	echo '<p class="text-right no-link-color"><small><a href="http://forecast.io/#/f/'.$weather_lat.','.$weather_long.'">Forecast.io</a></small></p> ';
+	echo '<h4 class="exoregular">The Sun</h4>';
+	echo '<h5 class="exoextralight" style="margin-top:10px">'.$rises.' at '.date('g:i A', $sunriseTime).'</h5>';
+	echo '<h5 class="exoextralight" style="margin-top:10px">'.$sets.' at '.date('g:i A', $sunsetTime).'</h5>';
+	echo '<p class="text-right no-link-color" style="margin-bottom:-10px"><small><a href="http://forecast.io/#/f/'.$weather_lat.','.$weather_long.'">Forecast.io</a></small></p> ';
 }
 
 ?>

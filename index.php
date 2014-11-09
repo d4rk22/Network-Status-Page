@@ -25,6 +25,9 @@
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/css/bootstrap.min.css">
 		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.0/css/font-awesome.css" rel="stylesheet">
 		<style type="text/css">
+			::-webkit-scrollbar { 
+    			display: none; 
+			}
 			body {
 				text-align: center;
 			}

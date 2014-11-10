@@ -579,6 +579,7 @@ function makeNowPlaying()
 				$viewOffset = $plexSessionXML->Video[$i-1]['viewOffset'];
 				$progress = sprintf('%.0f',($viewOffset / $duration) * 100);
 				$user = $plexSessionXML->Video[$i-1]->User['title'];
+				$device = $plexSessionXML->Video[$i-1]->Player['title'];
 				$state = $plexSessionXML->Video[$i-1]->Player['state'];
 				//echo '<div class="img-overlay">';
 				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$tvArt).'" alt="'.$showTitle.'">';
@@ -608,7 +609,11 @@ function makeNowPlaying()
 				else:
 					echo '<span class="glyphicon glyphicon-pause"></span>';
 				endif;
-				echo '<p class="exolight">'.$user.'</p>';
+				if ($user == ""):
+					echo '<p class="exolight">'.$device.'</p>';
+				else:
+					echo '<p class="exolight">'.$user.'</p>';
+				endif;
 			endif;
 			// Action buttons if we ever want to do something with them.
 			//echo '<p><a href="#" class="btn btn-primary">Action</a> <a href="#" class="btn btn-default">Action</a></p>';

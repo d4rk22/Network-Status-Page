@@ -542,6 +542,7 @@ function makeNowPlaying()
 				$viewOffset = $plexSessionXML->Video[$i-1]['viewOffset'];
 				$progress = sprintf('%.0f',($viewOffset / $duration) * 100);
 				$user = $plexSessionXML->Video[$i-1]->User['title'];
+				$device = $plexSessionXML->Video[$i-1]->Player['title'];
 				$state = $plexSessionXML->Video[$i-1]->Player['state'];
 				// Truncate movie summary if it's more than 50 words
 				if (countWords($mediaXML->Video['summary']) < 51):
@@ -566,7 +567,11 @@ function makeNowPlaying()
 				else:
 					echo '<span class="glyphicon glyphicon-pause"></span>';
 				endif;
-				echo '<p class="exolight">'.$user.'</p>';
+				if ($user == ""):
+					echo '<p class="exolight">'.$device.'</p>';
+				else:
+					echo '<p class="exolight">'.$user.'</p>';
+				endif;
 			else:
 				// Build information for a tv show
 				$tvArt = $mediaXML->Video['grandparentThumb'];

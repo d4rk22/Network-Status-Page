@@ -47,9 +47,8 @@ $weather_name = $config['weather_name'];
 
 // Set the path for the Plex Token
 $plexTokenCache = ROOT_DIR . '/cache/plex_token.txt';
-// Check to see if the plex token exists and is younger than one week
-// if not grab it and write it to the cache folder
-if (file_exists($plexTokenCache) && (filemtime($plexTokenCache) > (time() - 60 * 60 * 24 * 7))) {
+// Check to see if the plex token exists if not grab it and write it to the cache folder
+if (file_exists($plexTokenCache) {
 	$plexToken = file_get_contents(ROOT_DIR . '/cache/plex_token.txt');
 	file_put_contents($debug_file, date('Y-n-j G:i:s').' Using cached Plex token'."\r\n", FILE_APPEND);
 } else {

@@ -3,7 +3,7 @@ include 'init.php';
 include ROOT_DIR . '/assets/php/functions.php';
 $image_url = $_GET['img'];
 $network = getNetwork();
-$plexAddress = $network.':'.$plex_port;
+$plexAddress = 'http://'.$plex_server_ip.':'.$plex_port;
 $addressPosition = strpos($image_url, $plexAddress);
 if($addressPosition !== false && $addressPosition == 0) {
 	$image_src = $image_url . '?X-Plex-Token=' . $plexToken;
@@ -11,6 +11,6 @@ if($addressPosition !== false && $addressPosition == 0) {
 	//header("Content-Length: " . filesize($image_src));
 	readfile($image_src);
 } else {
-echo "Bad Plex Image Url";	
+echo "Bad Plex Image URL";
 }
 ?>

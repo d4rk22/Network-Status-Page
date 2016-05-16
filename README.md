@@ -1,4 +1,4 @@
-Network Status Page - 0.2.0
+Network Status Page - 0.2.1
 ===================
 
 Designed to monitor a local server and network with forecast.io, Plex, and pfSense integration.
@@ -7,7 +7,7 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 
 [Plex forum thread][pft]
 
-[ls]: http://d4rk.co/
+[ls]: http://status.d4rk.co/
 [pft]: http://forums.plexapp.com/index.php/topic/84856-network-status-page/
 
 

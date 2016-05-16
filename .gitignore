@@ -1,3 +1,5 @@
 assets/caches
 assets/php/analyticstracking.php
 cache/plex_token.txt
+
+cache/php-errors.txt

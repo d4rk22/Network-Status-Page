@@ -9,7 +9,8 @@
 	// shows being watched at the same time.
 	
 	$network = getNetwork();
-	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
+	$plexXLMString = 'http://'.$plex_server_ip.':'.$plex_port.'/status/sessions/?X-Plex-Token='.$plexToken;
+	$plexSessionXML = simplexml_load_file($plexXLMString);
 
 	// See if Plex Media Server is online and how many people are watching.
 	if (!$plexSessionXML):

@@ -1,14 +1,18 @@
 <?php
 
-$config_path = '/Users/zeus/Sites/config.ini'; //path to config file, recommend you place it outside of web root
-
-Ini_Set( 'display_errors', false);
+ini_set( 'display_errors', false);
 include '../../init.php';
 include 'lib/phpseclib0.3.5/Net/SSH2.php';
 require_once 'MinecraftServerStatus.class.php';
-$config = parse_ini_file($config_path);
+
+// Debugging options
+$debug_file = ROOT_DIR . '/cache/php-errors.txt';
+date_default_timezone_set("CST");
 
 // Import variables from config file
+$config_path = '/Library/Server/Web/Data/Sites/config.ini'; //path to config file, recommend you place it outside of web root
+$config = parse_ini_file($config_path);
+
 // Network Details
 $local_pfsense_ip = $config['local_pfsense_ip'];
 $local_server_ip = $config['local_server_ip'];
@@ -18,38 +22,64 @@ $wan2_ip = $config['wan2_ip'];
 $ping_ip = $config['ping_ip'];
 $plex_server_ip = $config['plex_server_ip'];
 $plex_port = $config['plex_port'];
+
 // Credentials
 $pfSense_username = $config['pfSense_username'];
 $pfSense_password = $config['pfSense_password'];
 $plex_username = $config['plex_username'];
 $plex_password = $config['plex_password'];
 $trakt_username = $config['trakt_username'];
+
 // API Keys
 $forecast_api = $config['forecast_api'];
 $sabnzbd_api = $config['sabnzbd_api'];
+$trakt_widget_key = $config['trakt_widget_key'];
+
 // SABnzbd+
 $sab_ip = $config['sab_ip'];
 $sab_port = $config['sab_port'];
 $ping_throttle = $config['ping_throttle'];
 $sabSpeedLimitMax = $config['sabSpeedLimitMax'];
 $sabSpeedLimitMin = $config['sabSpeedLimitMin'];
-// Misc
-$cpu_cores = $config['cpu_cores'];
+
+// Display Options
+$bandwidth_sidebar = $config['bandwidth_sidebar'];
 $weather_always_display = $config['weather_always_display'];
+
+// Weather Options
 $weather_lat = $config['weather_lat'];
 $weather_long = $config['weather_long'];
 $weather_name = $config['weather_name'];
 
+// Misc
+$cpu_cores = $config['cpu_cores'];
+
 // Set the path for the Plex Token
-$plexTokenCache = ROOT_DIR . '/assets/caches/plex_token.txt';
-// Check to see if the plex token exists and is younger than one week
-// if not grab it and write it to our caches folder
-if (file_exists($plexTokenCache) && (filemtime($plexTokenCache) > (time() - 60 * 60 * 24 * 7))) {
-	$plexToken = file_get_contents(ROOT_DIR . '/assets/caches/plex_token.txt');
-} else {
-	file_put_contents($plexTokenCache, getPlexToken());
-	$plexToken = file_get_contents(ROOT_DIR . '/assets/caches/plex_token.txt');
+$plexTokenPath = ROOT_DIR . '/cache/plex_token.txt';
+
+// Set global variable
+$plexToken = file_get_contents($plexTokenPath);
+
+// Test plex token for validity
+$handle = curl_init('http://'.$plex_server_ip.':'.$plex_port.'/status/sessions/?X-Plex-Token='.$plexToken);
+curl_setopt($handle,  CURLOPT_RETURNTRANSFER, TRUE);
+
+/* Get the HTML or whatever is linked in $url. */
+$response = curl_exec($handle);
+
+/* Check for 404 (file not found). */
+$httpCode = curl_getinfo($handle, CURLINFO_HTTP_CODE);
+if($httpCode == 401) {
+    /* Handle 401 here. */
+    cachePlexToken();
 }
+
+curl_close($handle);
+
+// Set the total disk space for Drobos as they don't report back to the OS correctly.
+$ereborTotalSpace = 8.961019766e+12; // This is in bytes
+$televisionTotalSpace = 1.196268651e+13; // This is in bytes
+$television2TotalSpace = 5.959353023e+12; // This is in bytes
 
 // Calculate server load
 if (strpos(strtolower(PHP_OS), "Darwin") === false)
@@ -57,10 +87,16 @@ if (strpos(strtolower(PHP_OS), "Darwin") === false)
 else
 	$loads = Array(0.55,0.7,1);
 
-// Set the total disk space
-$ereborTotalSpace = 8.961019766e+12; // This is in bytes
-$televisionTotalSpace = 1.196268651e+13; // This is in bytes
-$television2TotalSpace = 5.959353023e+12; // This is in bytes
+// Functions
+
+function cachePlexToken()
+{
+	global $plexTokenPath;
+	global $debug_file;
+	file_put_contents($plexTokenPath, getPlexToken());
+	file_put_contents($debug_file, date('Y-n-j G:i:s').' Writing new Plex token'."\r\n", FILE_APPEND);
+	$plexToken = file_get_contents($plexTokenPath);
+}
 
 // This is if you want to get a % of cpu usage in real time instead of load.
 // After using it for a week I determined that it gave me a lot less information than load does.
@@ -81,8 +117,8 @@ function makeCpuBars()
 
 function makeTotalDiskSpace()
 {
-	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/Time Machine") + getDiskspaceUsed("/Volumes/Isengard") + getDiskspaceUsed("/Volumes/1TB Portable") + getDiskspaceUsed("/Volumes/WD2.2") + getDiskspaceUsed("/Volumes/WD2.1") + getDiskspaceUsed("/Volumes/Barad-dur") + getDiskspaceUsed("/Volumes/Erebor") + getDiskspaceUsed("/Volumes/Television") + getDiskspaceUsed("/Volumes/Television 2");
-	$dts = disk_total_space("/") + disk_total_space("/Volumes/Time Machine") + disk_total_space("/Volumes/Isengard") + disk_total_space("/Volumes/1TB Portable") + disk_total_space("/Volumes/WD2.2") + disk_total_space("/Volumes/WD2.1") + disk_total_space("/Volumes/Barad-dur") + $GLOBALS['ereborTotalSpace'] + $GLOBALS['televisionTotalSpace'] + $GLOBALS['television2TotalSpace'];
+	$du = getDiskspaceUsed("/") + getDiskspaceUsed("/Volumes/4TB Storage");
+	$dts = disk_total_space("/") + disk_total_space("/Volumes/4TB Storage");
 	$dfree = $dts - $du;
 	printTotalDiskBar(sprintf('%.0f',($du / $dts) * 100), "Total Capacity", $dfree, $dts);
 }
@@ -131,15 +167,8 @@ function makeDiskBars()
 {
 	// For special drives like my Drobos I have to set the total disk space manually.
 	// That is why you see the total space in bytes.
-	printDiskBar(getDiskspace("/"), "SSD", disk_free_space("/"), disk_total_space("/"));
-	printDiskBar(getDiskspace("/Volumes/Time Machine"), "Time Machine", disk_free_space("/Volumes/Time Machine"), disk_total_space("/Volumes/Time Machine"));
-	printDiskBar(getDiskspace("/Volumes/Isengard"), "Isengard", disk_free_space("/Volumes/Isengard"), disk_total_space("/Volumes/Isengard"));
-	printDiskBar(getDiskspace("/Volumes/WD2.2"), "Minas Tirith", disk_free_space("/Volumes/WD2.2"), disk_total_space("/Volumes/WD2.2"));
-	printDiskBar(getDiskspace("/Volumes/WD2.1"), "Minas Morgul", disk_free_space("/Volumes/WD2.1"), disk_total_space("/Volumes/WD2.1"));
-	printDiskBar(getDiskspace("/Volumes/Barad-dur"), "Barad-dûr", disk_free_space("/Volumes/Barad-dur"), disk_total_space("/Volumes/Barad-dur"));
-	printDiskBar(getDiskspaceErebor("/Volumes/Erebor"), "Erebor", ($GLOBALS['ereborTotalSpace'] - getDiskspaceUsed("/Volumes/Erebor")), $GLOBALS['ereborTotalSpace']);
-	printDiskBar(getDiskspaceTV1("/Volumes/Television"), "Narya", ($GLOBALS['televisionTotalSpace'] - getDiskspaceUsed("/Volumes/Television")), $GLOBALS['televisionTotalSpace']);
-	printDiskBar(getDiskspaceTV2("/Volumes/Television 2"), "Nenya", ($GLOBALS['television2TotalSpace'] - getDiskspaceUsed("/Volumes/Television 2")), $GLOBALS['television2TotalSpace']);
+	printDiskBar(getDiskspace("/"), "MacOS", disk_free_space("/"), disk_total_space("/"));
+	printDiskBar(getDiskspace("/Volumes/4TB Storage"), "Media Storage", disk_free_space("/Volumes/4TB Storage"), disk_total_space("/Volumes/4TB Storage"));
 }
 
 function makeRamBars()
@@ -415,39 +444,21 @@ function sabSpeedAdjuster()
 
 function makeRecenlyViewed()
 {
+	// If Plex server is unavailable then show a poster from trakt.tv
 	global $local_pfsense_ip;
 	global $plex_port;
 	global $trakt_username;
+	global $trakt_widget_key;
 	global $weather_lat;
 	global $weather_long;
 	global $weather_name;
 	$network = getNetwork();
 	$clientIP = get_client_ip();
-	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
-	$trakt_url = 'http://trakt.tv/user/'.$trakt_username.'/widgets/watched/all-tvthumb.jpg';
-	$traktThumb = '/Users/zeus/Sites/d4rk.co/assets/caches/thumbnails/all-tvthumb.jpg';
+	$plexSessionXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.'/status/sessions/?X-Plex-Token='.$plexToken);
 
 	echo '<div class="col-md-12">';
-	echo '<a href="http://trakt.tv/user/'.$trakt_username.'" class="thumbnail">';
-	if (file_exists($traktThumb) && (filemtime($traktThumb) > (time() - 60 * 15))) {
-		// Trakt image is less than 15 minutes old.
-		// Don't refresh the image, just use the file as-is.
-		echo '<img src="'.$network.'/assets/caches/thumbnails/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
-	} else {
-		// Either file doesn't exist or our cache is out of date,
-		// so check if the server has different data,
-		// if it does, load the data from our remote server and also save it over our cache for next time.
-		$thumbFromTrakt_md5 = md5_file($trakt_url);
-		$traktThumb_md5 = md5_file($traktThumb);
-		if ($thumbFromTrakt_md5 === $traktThumb_md5) {
-			echo '<img src="'.$network.'/assets/caches/thumbnails/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
-		} else {
-			$thumbFromTrakt = file_get_contents($trakt_url);
-			file_put_contents($traktThumb, $thumbFromTrakt, LOCK_EX);
-			echo '<img src="'.$network.'/assets/caches/thumbnails/all-tvthumb.jpg" alt="trakt.tv" class="img-responsive"></a>';
+	echo '<a href="http://trakt.tv/user/'.$trakt_username.'" class="thumbnail"> <img src="https://widgets.trakt.tv/users/'.$trakt_widget_key.'/watched/poster@2x.jpg" alt="trakt.tv" class="img-responsive"></a>';
 
-		}
-	}
 	// This checks to see if you are inside your local network. If you are it gives you the forecast as well.
 	if($clientIP == $local_pfsense_ip && count($plexSessionXML->Video) == 0) {
 		echo '<hr>';
@@ -461,10 +472,11 @@ function makeRecenlyViewed()
 function makeRecenlyReleased()
 {
 	// Various items are commented out as I was playing with what information to include.
+	global $plex_server_ip;
 	global $plex_port;
 	$network = getNetwork();
 	$clientIP = get_client_ip();
-	$plexNewestXML = simplexml_load_file($network.':'.$plex_port.'/library/sections/7/newest');
+	$plexNewestXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.'/library/sections/7/newest/?X-Plex-Token='.$plexToken);
 	
 	//echo '<div class="col-md-10 col-sm-offset-1">';
 	echo '<div class="col-md-12">';
@@ -474,21 +486,21 @@ function makeRecenlyReleased()
 	echo '<div class="carousel-inner">';
 	echo '<div class="item active">';
 	$mediaKey = $plexNewestXML->Video[0]['key'];
-	$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
+	$mediaXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.$mediaKey);
 	$movieTitle = $mediaXML->Video['title'];
 	$movieArt = $mediaXML->Video['thumb'];
-	echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
+	echo '<img src="plex.php?img='.urlencode('http://'.$plex_server_ip.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
 	echo '</div>'; // Close item div
 	$i=1;
 	for ( ; ; ) {
 		if($i==15) break;
 		$mediaKey = $plexNewestXML->Video[$i]['key'];
-		$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
+		$mediaXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.$mediaKey.'/?X-Plex-Token='.$plexToken);
 		$movieTitle = $mediaXML->Video['title'];
 		$movieArt = $mediaXML->Video['thumb'];
 		$movieYear = $mediaXML->Video['year'];
 		echo '<div class="item">';
-		echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
+		echo '<img src="plex.php?img='.urlencode('http://'.$plex_server_ip.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
 		//echo '<div class="carousel-caption">';
 		//echo '<h3>'.$movieTitle.$movieYear.'</h3>';
 		//echo '<p>Summary</p>';
@@ -511,9 +523,11 @@ function makeRecenlyReleased()
 
 function makeNowPlaying()
 {
+	global $plex_server_ip;
 	global $plex_port;
+	global $plexToken;
 	$network = getNetwork();
-	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
+	$plexSessionXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.'/status/sessions/?X-Plex-Token='.$plexToken);
 
 	if (!$plexSessionXML):
 		makeRecenlyViewed();
@@ -530,7 +544,7 @@ function makeNowPlaying()
 		foreach ($plexSessionXML->Video as $sessionInfo):
 			$mediaKey = $sessionInfo['key'];
 			$playerTitle = $sessionInfo->Player['title'];
-			$mediaXML = simplexml_load_file($network.':'.$plex_port.$mediaKey);
+			$mediaXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.$mediaKey.'/?X-Plex-Token='.$plexToken);
 			$type = $mediaXML->Video['type'];
 			echo '<div class="thumbnail">';
 			$i++; // Increment i every pass through the array
@@ -551,7 +565,7 @@ function makeNowPlaying()
 					$movieSummary = limitWords($mediaXML->Video['summary'],50); // Limit to 50 words
 					$movieSummary .= "..."; // Add ellipsis
 				endif;
-				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
+				echo '<img src="plex.php?img='.urlencode('http://'.$plex_server_ip.':'.$plex_port.$movieArt).'" alt="'.$movieTitle.'">';
 				// Make now playing progress bar
 				//echo 'div id="now-playing-progress-bar">';
 				echo '<div class="progress now-playing-progress-bar">';
@@ -587,7 +601,7 @@ function makeNowPlaying()
 				$device = $plexSessionXML->Video[$i-1]->Player['title'];
 				$state = $plexSessionXML->Video[$i-1]->Player['state'];
 				//echo '<div class="img-overlay">';
-				echo '<img src="plex.php?img='.urlencode($network.':'.$plex_port.$tvArt).'" alt="'.$showTitle.'">';
+				echo '<img src="plex.php?img='.urlencode('http://'.$plex_server_ip.':'.$plex_port.$tvArt).'" alt="'.$showTitle.'">';
 				// Make now playing progress bar
 				//echo 'div id="now-playing-progress-bar">';
 				echo '<div class="progress now-playing-progress-bar">';
@@ -639,7 +653,7 @@ function getTranscodeSessions()
 {
 	global $plex_port;
 	$network = getNetwork();
-	$plexSessionXML = simplexml_load_file($network.':'.$plex_port.'/status/sessions');
+	$plexSessionXML = simplexml_load_file('http://'.$plex_server_ip.':'.$plex_port.'/status/sessions/?X-Plex-Token='.$plexToken);
 
 	if (count($plexSessionXML->Video) > 0):
 		$i = 0; // i is the variable that gets iterated each pass through the array
@@ -764,7 +778,7 @@ function getPlexToken()
 {
 	global $plex_username;
 	global $plex_password;
-	$myPlex = shell_exec('curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: my-app" -u "'.$plex_username.'"":""'.$plex_password.'" -X POST https://my.plexapp.com/users/sign_in.xml 2> /dev/null');
+	$myPlex = shell_exec('curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: 365f1969-da53-411a-ad52-9c82437dcd58" -H "X-Plex-Product: Network-Status-Page" -H "X-Plex-Version: 0.2.1" -u "'.$plex_username.'"":""'.$plex_password.'" -X POST https://my.plexapp.com/users/sign_in.xml 2> /dev/null');
 	$myPlex_xml = simplexml_load_string($myPlex);
 	$token = $myPlex_xml['authenticationToken'];
 	return $token;

@@ -5,9 +5,17 @@
 
 	include 'init.php';
 	include ROOT_DIR . '/assets/php/Mobile_Detect.php';
-	include_once(ROOT_DIR . "/assets/php/analyticstracking.php");
+	//include_once(ROOT_DIR . "/assets/php/analyticstracking.php");
 
 	$detect = new Mobile_Detect;
+
+	// Import variables from config file
+	$config_path = '/Library/Server/Web/Data/Sites/config.ini'; //path to config file, recommend you place it outside of web root
+	$config = parse_ini_file($config_path);
+
+	// Display Options
+	$bandwidth_sidebar = $config['bandwidth_sidebar'];
+	$weather_always_display = $config['weather_always_display'];
 ?>
 <html lang="en">
 	<head>
@@ -131,6 +139,12 @@
 									<div id="left_column_top"></div>
 								</div>
 							</div>
+
+							<?php 
+							if ($bandwidth_sidebar = 'false'):
+
+							else: ?>
+
 							<!-- Bandwidth -->
 							<div class="panel panel-default">
 								<div class="panel-heading">
@@ -142,6 +156,12 @@
 									<div id="bandwidth"></div>
 								</div>
 							</div>
+
+							<?php
+							endif; 
+
+							?>
+
 							<!-- Services -->
 							<div class="panel panel-default">
 								<div class="panel-heading">

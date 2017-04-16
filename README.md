@@ -11,7 +11,7 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 [pft]: http://forums.plexapp.com/index.php/topic/84856-network-status-page/
 
 
-###Features
+### Features
 ---------------
 * Responsive web design viewable on desktop, tablet and mobile web browsers 
 
@@ -36,14 +36,14 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 [bs]: http://getbootstrap.com
 
 
-###Screenshots
+### Screenshots
 ---------------
 ![alt tag](http://d.pr/i/1hfF8+)
 
 ![alt tag](http://d.pr/i/1eTEu+)
 
 
-###Requirements
+### Requirements
 ---------------
 * [Plex Media Server][pms] (v0.9.8+) and a [myPlex][pp] account `These are both free.`
 * The weather sidebar requires a [forecast.io API key][fcAPI] `Free up to 1000 calls/day.`
@@ -57,7 +57,7 @@ Designed to monitor a local server and network with forecast.io, Plex, and pfSen
 [fcAPI]: https://developer.forecast.io
 
 
-###Optional
+### Optional
 ---------------
 * A few functions are written to be used with the following software but they are optional:
 	* [SABnzbd+][sab]
